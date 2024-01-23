@@ -56,7 +56,7 @@ jobs:
         with:
           host: ${{ secrets.DEPLOYMENT_HOST }}
           username: ${{ secrets.DEPLOYMENT_USERNAME }}
-          password: ${{ secrets.DEPLOYMENT_KEY }}
+          key: ${{ secrets.DEPLOYMENT_KEY }}
           script: |
             docker stop wee-was
             docker rm wee-was
