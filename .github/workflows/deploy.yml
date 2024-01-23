@@ -27,11 +27,14 @@ jobs:
         run: |
           cd demo
           ./gradlew build -x test --no-daemon
+<<<<<<< HEAD
         env:
           WEE_DB_URL: ${{ secrets.WEE_DB_URL }}
           WEE_DB_USERNAME: ${{ secrets.WEE_DB_USERNAME }}
           WEE_DB_PASSWORD: ${{ secrets.WEE_DB_URLPASSWORD }}
 
+=======
+>>>>>>> 48848f7959528b0810c562dd5a010bf950a7b82c
 
       # Docker hub login
       - name: Docker login
@@ -68,4 +71,8 @@ jobs:
             docker image rm ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKERHUB_REPONAME }}:be
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKERHUB_REPONAME }}:be
             docker run -d -p 8080:8080 \
+<<<<<<< HEAD
             --name wee-was ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKERHUB_REPONAME }}:be
+=======
+            --name wee-was ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKERHUB_REPONAME }}:be
+>>>>>>> 48848f7959528b0810c562dd5a010bf950a7b82c
