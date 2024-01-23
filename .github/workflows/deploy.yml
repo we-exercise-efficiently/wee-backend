@@ -24,7 +24,9 @@ jobs:
 
       # SpringBoot application build
       - name: Build with Gradle without running tests
-        run: ./gradlew build -x test --no-daemon
+        run: |
+          cd demo
+          ./gradlew build -x test --no-daemon
 
       # Docker hub login
       - name: Docker login
@@ -37,10 +39,11 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v4
         with:
-          context: .
-          file: ./Dockerfile
+          context: ./demo
+          file: ./demo/Dockerfile
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKERHUB_REPONAME }}:be
+
 
   CD:
     needs: [ CI ]
