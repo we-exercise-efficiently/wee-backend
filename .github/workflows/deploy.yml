@@ -1,75 +1,71 @@
-name: Deploy to Amazon EC2
+name: Spring CI/CD
 
 on:
   push:
-    branches:
-      - main
-
-env:
-  AWS_REGION: 
-  S3_BUCKET_NAME: 
-  CODE_DEPLOY_APPLICATION_NAME: 
-  CODE_DEPLOY_DEPLOYMENT_GROUP_NAME: 
-
-permissions:
-  contents: read
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
 
 jobs:
-  build:
+  CI:
     runs-on: ubuntu-latest
-    environment: production
-    env:
-      working-directory: ./demo/
-    
     steps:
-      # (1) 기본 체크아웃
-      - name: Checkout
-        uses: actions/checkout@v3
-        
-      # (2) JDK 17 세팅
+      - uses: actions/checkout@v2
+
+      # Java & Docker setting
       - name: Set up JDK 17
         uses: actions/setup-java@v3
         with:
-          distribution: 'temurin'
           java-version: '17'
-          
-      - name: Gradle Caching
-        uses: actions/cache@v3
+          distribution: 'temurin'
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      # SpringBoot application build
+      - name: Build with Gradle without running tests
+        run: |
+          cd demo
+          ./gradlew build -x test --no-daemon
+        env:
+          WEE_DB_URL: ${{ secrets.WEE_DB_URL }}
+          WEE_DB_USERNAME: ${{ secrets.WEE_DB_USERNAME }}
+          WEE_DB_PASSWORD: ${{ secrets.WEE_DB_URLPASSWORD }}
+
+
+      # Docker hub login
+      - name: Docker login
+        uses: docker/login-action@v2
         with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-                  
-      # (3) Gradle build (Test 제외)
-      - name: Build with Gradle
-        run: |
-          chmod +x gradlew
-          ./gradlew build -x test
-        working-directory: ${{env.working-directory}}
-        
-      - name: Make Zip File
-        run: zip -qq -r ./$GITHUB_SHA.zip ./demo
-        shell: bash
-        
-      # (4) AWS 인증 (IAM 사용자 Access Key, Secret Key 활용)
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # Docker build & push
+      - name: Build and push
+        uses: docker/build-push-action@v4
         with:
-          aws-access-key-id: ${{ secrets.TEST_AWS_ACCESS_KEY }}
-          aws-secret-access-key: ${{ secrets.TEST_AWS_SECRET_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
-      # (5) 빌드 결과물을 S3 버킷에 업로드
-      - name: Upload to AWS S3
-        run: |
-          aws s3 cp --region ap-northeast-2 ./$GITHUB_SHA.zip s3://$S3_BUCKET_NAME/$GITHUB_SHA.zip
-      # (6) S3 버킷에 있는 파일을 대상으로 CodeDeploy 실행
-      - name: Deploy to AWS EC2 from S3
-        run: |
-          aws deploy create-deployment \
-            --application-name ${{ env.CODE_DEPLOY_APPLICATION_NAME }} \
-            --deployment-config-name CodeDeployDefault.AllAtOnce \
-            --deployment-group-name ${{ env.CODE_DEPLOY_DEPLOYMENT_GROUP_NAME }} \
-            --s3-location bucket=$S3_BUCKET_NAME,key=$GITHUB_SHA.zip,bundleType=zip
+          context: ./demo
+          file: ./demo/Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKERHUB_REPONAME }}:be
+
+
+  CD:
+    needs: [ CI ]
+    runs-on: ubuntu-latest
+
+    # The latest docker image pull & container run
+    steps:
+      - name: Docker image pull and Container run
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.DEPLOYMENT_HOST }}
+          username: ${{ secrets.DEPLOYMENT_USERNAME }}
+          key: ${{ secrets.DEPLOYMENT_KEY }}
+          script: |
+            docker stop wee-was
+            docker rm wee-was
+            docker image rm ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKERHUB_REPONAME }}:be
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKERHUB_REPONAME }}:be
+            docker run -d -p 8080:8080 \
+            --name wee-was ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKERHUB_REPONAME }}:be
