@@ -1,11 +1,10 @@
 package com.wee.demo.controller;
 
-import com.wee.demo.domain.Info;
 import com.wee.demo.domain.User;
-import com.wee.demo.dto.request.LoginDto;
 import com.wee.demo.dto.request.UserDto;
-//import com.wee.demo.dto.response.LoginResponseDto;
+import com.wee.demo.dto.request.UserLoginDto;
 import com.wee.demo.dto.request.UserUpdateDto;
+import com.wee.demo.dto.response.UserLoginResponseDto;
 import com.wee.demo.dto.response.UserResponseDto;
 import com.wee.demo.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +24,7 @@ public class UserController {
     private final UserService userServiceImpl;
 
     @PostMapping("/register")
-    public ResponseEntity<UserResponseDto<UserDto>> register(@RequestBody UserDto userDto) {
+    public ResponseEntity<UserResponseDto<UserDto>> register(@RequestBody com.wee.demo.dto.request.UserDto userDto) {
         UserDto registeredUserDto = customUserDetailsService.register(userDto);
 
         // UserResponseDto 객체를 생성하여 반환합니다.
@@ -34,9 +33,9 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
     @PostMapping("/login")
-    public ResponseEntity<User> login(@RequestBody LoginDto loginDto) {
-        User user = userServiceImpl.login(loginDto.getEmail(), loginDto.getPassword());
-        return ResponseEntity.ok(user);
+    public ResponseEntity<UserLoginResponseDto> login(@RequestBody UserLoginDto loginDto) {
+        UserLoginResponseDto response = userServiceImpl.login(loginDto.getEmail(), loginDto.getPassword());
+        return ResponseEntity.ok(response);
     }
     @GetMapping("/mypage")
     public ResponseEntity<UserResponseDto<User>> getUser(@RequestParam Long userId) {
