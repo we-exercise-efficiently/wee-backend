@@ -1,4 +1,4 @@
-package com.wee.demo.domain.repository;
+package com.wee.demo.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import com.wee.demo.domain.User;

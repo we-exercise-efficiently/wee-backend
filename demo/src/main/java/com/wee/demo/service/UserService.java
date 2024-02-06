@@ -1,14 +1,14 @@
 package com.wee.demo.service;
 
 import com.wee.demo.domain.User;
-import com.wee.demo.domain.repository.UserRepository;
+import com.wee.demo.dto.response.UserTokenResponseDto;
+import com.wee.demo.repository.UserRepository;
 import com.wee.demo.dto.request.UserDto;
-//import com.wee.demo.security.PasswordEncoderConfig;
 import com.wee.demo.dto.request.UserUpdateDto;
-import com.wee.demo.dto.response.UserLoginResponseDto;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -24,7 +24,8 @@ public class UserService {
     // 회원가입 | 로그인 | 회원정보 조회 | 회원정보 수정 | 회원정보 삭제
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private String jwtSecret = "dKj82k$#ks0KKS!29sAdjdk82k$#ks0KKS!29sAdjdk82k$#ks0KKS!29sAdjdk82k$#ks0KKS!29sAd";  // 차후 application.properties 또는 env에 추가될 예정
+    @Value("${jwt.secret}")
+    private String jwtSecret;
     @Transactional
     public UserDto register(UserDto userDto) {
         String encodedPassword = passwordEncoder.encode(userDto.getPassword());
@@ -39,21 +40,22 @@ public class UserService {
         userDto.setUserId(savedUser.getUserId());
         return userDto;
     }
-    public UserLoginResponseDto login(String email, String password) {
+    public UserTokenResponseDto login(String email, String password) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
         if (!passwordEncoder.matches(password, user.getPassword())) {
             throw new BadCredentialsException("wrong password");
         }
-        // JWT 토큰 생성: 차후 별도 로직으로 분리해야함
-        String token = Jwts.builder()
+
+        String accessToken = Jwts.builder()
                 .setSubject(email)
                 .signWith(SignatureAlgorithm.HS512, Base64.getEncoder().encodeToString(jwtSecret.getBytes()))
                 .compact();
-        UserLoginResponseDto response = new UserLoginResponseDto();
-        response.setToken(token);
-        response.setUser(user);
-        return response;
+        String refreshToken = Jwts.builder()
+                .setSubject(email)
+                .signWith(SignatureAlgorithm.HS512, Base64.getEncoder().encodeToString(jwtSecret.getBytes()))
+                .compact();
+        return new UserTokenResponseDto(accessToken, refreshToken, user);
     }
     public Optional<User> getUser(Long userId) {
         return userRepository.findByUserId(userId);
