@@ -15,9 +15,9 @@ public class UserDto {
     private String nickname;
     private String password;
     private Boolean gender;
-    private Integer height;
-    private Integer weight;
-    private Integer bodyFat;
+    private Double height;
+    private Double weight;
+    private Double bodyFat;
     private String goal;
     private String interest;
     private Integer level;
