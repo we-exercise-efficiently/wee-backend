@@ -12,7 +12,7 @@ import java.util.List;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
 @Builder
-@Getter
+@Data
 @Table(name = "todo")
 public class Todo {
     @Id @GeneratedValue
@@ -23,8 +23,7 @@ public class Todo {
     private User user;
     private Date today;
     private String diary;
-    @OneToMany(mappedBy = "todo", cascade = CascadeType.ALL)
-    private List<Image> imageList = new ArrayList<>();
+    private String image;
     @OneToMany(mappedBy = "todo", cascade = CascadeType.ALL)
     private List<Category> categoryList = new ArrayList<>();
 

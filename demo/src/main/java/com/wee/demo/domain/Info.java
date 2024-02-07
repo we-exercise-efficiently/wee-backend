@@ -14,9 +14,9 @@ import org.springframework.security.oauth2.core.oidc.OidcUserInfo;
 @AllArgsConstructor
 public class Info {
     private Boolean gender;
-    private Integer height;
-    private Integer weight;
-    private Integer bodyFat;
+    private Double height;
+    private Double weight;
+    private Double bodyFat;
     private String goal;
     private String interest;
     private Integer level;
