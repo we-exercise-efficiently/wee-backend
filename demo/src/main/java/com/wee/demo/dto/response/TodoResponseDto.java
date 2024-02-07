@@ -10,15 +10,11 @@ import java.util.List;
 @AllArgsConstructor
 public class TodoResponseDto {
     private Long todoId;
-    private List<Long> categoryId;
-    private List<Long> taskId;
-    public static TodoResponseDto from(Long todoId, List<Long> categoryId, List<Long> taskId){
+    private List<CategoryResponseDto> categoryIdList;
+    public static TodoResponseDto from(Long todoId, List<CategoryResponseDto> categoryIdList){
         return TodoResponseDto.builder()
                 .todoId(todoId)
-                .categoryId(categoryId)
-                .taskId(taskId)
+                .categoryIdList(categoryIdList)
                 .build();
     }
-
-
 }

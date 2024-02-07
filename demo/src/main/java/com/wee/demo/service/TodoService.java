@@ -4,6 +4,8 @@ import com.wee.demo.domain.*;
 import com.wee.demo.dto.request.CategoryRequestDto;
 import com.wee.demo.dto.request.TaskRequestDto;
 import com.wee.demo.dto.request.TodoRequestDto;
+import com.wee.demo.dto.response.CategoryResponseDto;
+import com.wee.demo.dto.response.ResultType;
 import com.wee.demo.dto.response.TodoResponseDto;
 import com.wee.demo.repository.CategoryRepository;
 import com.wee.demo.repository.TaskRepository;
@@ -26,10 +28,10 @@ public class TodoService {
     private final TodoRepository todoRepository;
     private final CategoryRepository categoryRepository;
     private final TaskRepository taskRepository;
+
     @Transactional
     public TodoResponseDto createTodo(Long userId, TodoRequestDto todoRequestDto) {
-        List<Long> categoryId = new ArrayList<>();
-        List<Long> taskId = new ArrayList<>();
+        List<CategoryResponseDto> categoryIdList = new ArrayList<>();
 
         User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException(("사용자가 존재하지 않습니다.")));
         Todo todo = Todo.builder()
@@ -41,6 +43,7 @@ public class TodoService {
                 .build();
         todoRepository.save(todo);
         todoRequestDto.getCategoryList().stream().forEach(categoryRequestDto -> {
+            List<Long> taskId = new ArrayList<>();
             Category category = Category.builder()
                     .todo(todo)
                     .categoryItem(categoryRequestDto.getCategoryItem())
@@ -59,10 +62,10 @@ public class TodoService {
                 category.getTaskList().add(task); // Category에 Task 추가
             });
             todo.getCategoryList().add(category);
-            categoryId.add(category.getId());
+            categoryIdList.add(CategoryResponseDto.from(category.getId(), taskId));
         });
         user.getTodoList().add(todo);
-        return TodoResponseDto.from(todo.getId(), categoryId, taskId);
+        return TodoResponseDto.from(todo.getId(), categoryIdList);
     }
     @Transactional
     public Long updateTodo(Long todoId, TodoRequestDto todoRequestDto) {
@@ -84,4 +87,23 @@ public class TodoService {
         task.setCompleted(taskReqeustDto.isCompleted());
         return task.getId();
     }
+    @Transactional
+    public ResultType deleteTodo(Long todoId) {
+        Todo todo = todoRepository.findById(todoId).orElseThrow(() -> new IllegalArgumentException(("todo 가 존재하지 않습니다.")));
+        todoRepository.delete(todo);
+        return ResultType.SUCCESS;
+    }
+    @Transactional
+    public ResultType deleteCategory(Long categoryId) {
+        Category category = categoryRepository.findById(categoryId).orElseThrow(() -> new IllegalArgumentException(("category 가 존재하지 않습니다.")));
+        categoryRepository.delete(category);
+        return ResultType.SUCCESS;
+    }
+    @Transactional
+    public ResultType deleteTask(Long taskId) {
+        Task task = taskRepository.findById(taskId).orElseThrow(() -> new IllegalArgumentException(("task 가 존재하지 않습니다.")));
+        taskRepository.delete(task);
+        return ResultType.SUCCESS;
+    }
+
 }

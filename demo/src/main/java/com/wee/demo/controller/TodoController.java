@@ -4,6 +4,7 @@ import com.wee.demo.domain.Todo;
 import com.wee.demo.dto.request.CategoryRequestDto;
 import com.wee.demo.dto.request.TaskRequestDto;
 import com.wee.demo.dto.request.TodoRequestDto;
+import com.wee.demo.dto.response.ResultType;
 import com.wee.demo.dto.response.TodoResponseDto;
 import com.wee.demo.service.TodoService;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +33,18 @@ public class TodoController {
     @PatchMapping("task/{taskId}")
     public Long updateTask(@PathVariable Long taskId, @RequestBody TaskRequestDto taskReqeustDto){
         return todoService.updateTask(taskId, taskReqeustDto);
+    }
+    @DeleteMapping("todo/{todoId}")
+    public ResultType deleteTodo(@PathVariable Long todoId){
+        return todoService.deleteTodo(todoId);
+    }
+    @DeleteMapping("category/{categoryId}")
+    public ResultType deleteCategory(@PathVariable Long categoryId){
+        return todoService.deleteCategory(categoryId);
+    }
+    @DeleteMapping("task/{taskId}")
+    public ResultType deleteTask(@PathVariable Long taskId){
+        return todoService.deleteTask(taskId);
     }
 
 }

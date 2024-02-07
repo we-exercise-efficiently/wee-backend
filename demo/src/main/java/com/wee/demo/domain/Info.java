@@ -6,11 +6,11 @@ import lombok.Getter;
 @Embeddable
 @Getter
 public class Info {
-    private boolean gender;
-    private double height;
-    private double weight;
-    private double bodyFat;
+    private Boolean gender;
+    private Double height;
+    private Double weight;
+    private Double bodyFat;
     private String goal;
     private String interest;
-    private int level;
+    private Integer level;
 }
