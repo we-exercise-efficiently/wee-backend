@@ -1,16 +1,23 @@
 package com.wee.demo.domain;
 
 import jakarta.persistence.Embeddable;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import org.springframework.security.oauth2.core.oidc.OidcUserInfo;
 
 @Embeddable
 @Getter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Info {
-    private boolean gender;
-    private double height;
-    private double weight;
-    private double bodyFat;
+    private Boolean gender;
+    private Integer height;
+    private Integer weight;
+    private Integer bodyFat;
     private String goal;
     private String interest;
-    private int level;
+    private Integer level;
 }
