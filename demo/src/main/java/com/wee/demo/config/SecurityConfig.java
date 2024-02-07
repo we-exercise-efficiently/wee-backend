@@ -49,7 +49,7 @@
 //        return auth.build();
 //    }
 //}
-package com.wee.demo.security;
+package com.wee.demo.config;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
