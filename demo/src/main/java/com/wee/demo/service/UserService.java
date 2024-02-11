@@ -77,33 +77,3 @@ public class UserService {
         userRepository.deleteByUserId(userId);
     }
 }
-
-    // 로그인
-//    private final JwtTokenProvider tokenProvider;
-//    private final AuthenticationManager authenticationManager;
-//    public UserResponseDto<LoginResponseDto> login(UserDto userDto) throws AuthenticationException {
-//        Authentication authentication = authenticationManager.authenticate(
-//                new UsernamePasswordAuthenticationToken(5userDto.getEmail(), userDto.getPassword())
-//        );
-//
-//        SecurityContextHolder.getContext().setAuthentication(authentication);
-//        User user = userRepository.findByEmail(userDto.getEmail())
-//                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-//
-//        // 토큰 생성
-//        String jwt = tokenProvider.generateToken(authentication);
-//        String refreshToken = tokenProvider.generateRefreshToken();
-//
-//        // 사용자 정보와 토큰을 포함하는 LoginResponseDto 생성
-//        LoginResponseDto loginResponse = new LoginResponseDto(jwt, refreshToken);
-//
-//        // 사용자 정보와 LoginResponseDto를 포함하는 UserResponseDto 반환
-//        UserResponseDto<LoginResponseDto> response = new UserResponseDto<>(
-//                "200", "Login successful", loginResponse);
-//
-//        return response;
-//    }
-
-
-
-
