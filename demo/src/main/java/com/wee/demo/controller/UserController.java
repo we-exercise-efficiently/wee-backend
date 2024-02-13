@@ -22,7 +22,7 @@ import java.util.Optional;
 @Slf4j
 @RequiredArgsConstructor
 @RequestMapping("/wee/user")
-@CrossOrigin(origins = {"http://localhost:3000", "http://43.200.2.121:3000/", "http://43.200.2.121:8080/"}, allowCredentials = "true")
+//@CrossOrigin(origins = {"http://localhost:3000", "http://43.200.2.121:3000/", "http://43.200.2.121:8080/"}, allowCredentials = "true")
 public class UserController {
     private final UserService customUserDetailsService;
     private final UserService userServiceImpl;
