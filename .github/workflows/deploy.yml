@@ -29,6 +29,9 @@ jobs:
           WEE_DB_URL: ${{ secrets.WEE_DB_URL }}
           WEE_DB_USERNAME: ${{ secrets.WEE_DB_USERNAME }}
           WEE_DB_PASSWORD: ${{ secrets.WEE_DB_PASSWORD }}
+      - name: Print environment variables
+        run: echo $WEE_DB_URL $WEE_DB_USERNAME $WEE_DB_PASSWORD
+
 
       # Docker hub login
       - name: Docker login
