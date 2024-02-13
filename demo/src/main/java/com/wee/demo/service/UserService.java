@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Base64;
+import java.util.Date;
 import java.util.Optional;
 
 @Service
@@ -49,13 +50,16 @@ public class UserService {
 
         String accessToken = Jwts.builder()
                 .setSubject(email)
+                .setExpiration(new Date(System.currentTimeMillis() + 24 * 60 * 60 * 1000))  // 1시간
                 .signWith(SignatureAlgorithm.HS512, Base64.getEncoder().encodeToString(jwtSecret.getBytes()))
                 .compact();
         String refreshToken = Jwts.builder()
                 .setSubject(email)
+                .claim("isRefreshToken", true)
+                .setExpiration(new Date(System.currentTimeMillis() + 60 * 60 * 60 * 24 * 30 * 1000))  // 1개월
                 .signWith(SignatureAlgorithm.HS512, Base64.getEncoder().encodeToString(jwtSecret.getBytes()))
                 .compact();
-        return new UserTokenResponseDto(accessToken, refreshToken, user);
+        return new UserTokenResponseDto(accessToken, refreshToken);
     }
     public Optional<User> getUser(Long userId) {
         return userRepository.findByUserId(userId);
