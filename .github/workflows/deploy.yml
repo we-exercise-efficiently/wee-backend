@@ -26,9 +26,12 @@ jobs:
           cd demo
           ./gradlew build -x test --no-daemon
         env:
-          WEE_DB_URL: ${{ secrets.WEE_DB_URL }}
-          WEE_DB_USERNAME: ${{ secrets.WEE_DB_USERNAME }}
-          WEE_DB_PASSWORD: ${{ secrets.WEE_DB_PASSWORD }}
+          WEE_DB_URL: jdbc:mariadb://43.200.2.121:3306/wee_db
+          WEE_DB_USERNAME: root
+          WEE_DB_PASSWORD: 1234
+      - name: Print environment variables
+        run: echo $WEE_DB_URL $WEE_DB_USERNAME $WEE_DB_PASSWORD
+
 
       # Docker hub login
       - name: Docker login
@@ -51,7 +54,7 @@ jobs:
     needs: [ CI ]
     runs-on: ubuntu-latest
 
-    # The latest docker image pull & container run
+    # The latest docker image pull & container run 
     steps:
       - name: Docker image pull and Container run
         uses: appleboy/ssh-action@v1.0.0
