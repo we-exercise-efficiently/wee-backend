@@ -1,7 +1,6 @@
 package com.wee.demo.dto.request;
 
 import lombok.*;
-import java.time.LocalDateTime;
 import com.wee.demo.domain.User;
 import com.wee.demo.domain.Info;
 
@@ -9,7 +8,7 @@ import com.wee.demo.domain.Info;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class UserDto {
+public class UserRequestDto {
     private Long userId;
     private String email;
     private String nickname;
