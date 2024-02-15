@@ -35,7 +35,8 @@ public class SecurityConfig {
                                 "/wee/user/login/**",
                                 "https://kauth.kakao.com/oauth/token",
                                 "https://kapi.kakao.com/v2/user/me",
-                                "/wee/user/mypage/**").permitAll()
+                                "/wee/user/mypage/**",
+                                "/wee/comm/question/**").permitAll()
                         .anyRequest().authenticated()).build();
     }
     @Bean

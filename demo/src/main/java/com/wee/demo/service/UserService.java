@@ -41,6 +41,10 @@ public class UserService {
     private String jwtSecret;
     @Value("${kakao.client.id}")
     private String clientId;
+    @Value("${kakao.client.secret}")
+    private String clientSecret;
+    @Value("${kakao.redirect.url}")
+    private String redirectUrl;
 
     @Transactional
     public UserRequestDto register(UserRequestDto userRequestDto) {
@@ -102,13 +106,14 @@ public class UserService {
         kakaoUserAuthorization(authentication, response);
         return kakaoUserInfo;
     }
-    private String getAccessToken(String code) throws JsonProcessingException {
+    public String getAccessToken(String code) throws JsonProcessingException {
         HttpHeaders headers = new HttpHeaders();
         headers.add("Content-type", "application/x-www-form-urlencoded;charset=utf-8");
         MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
         body.add("grant_type", "authorization_code");
         body.add("client_id", clientId);
-        body.add("redirect_uri", "http://43.200.2.121:8080/wee/user/login/kakao/callback");
+        body.add("client_secret", clientSecret);
+        body.add("redirect_uri", redirectUrl);
         body.add("code", code);
         HttpEntity<MultiValueMap<String, String>> kakaoTokenRequest = new HttpEntity<>(body, headers);
         RestTemplate rt = new RestTemplate();
@@ -118,7 +123,6 @@ public class UserService {
                 kakaoTokenRequest,
                 String.class
         );
-
         String resposeBody = response.getBody();
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode jsonNode = objectMapper.readTree(resposeBody);

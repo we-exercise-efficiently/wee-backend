@@ -79,7 +79,8 @@ public class UserController {
         return userServiceImpl.kakaoLogin(code, response);
     }
     @PostMapping("/login/kakao")
-    public ResponseEntity<UserResponseDto<UserTokenResponseDto>> kakaoLogin(@RequestHeader("Authorization") String accessToken) throws JsonProcessingException {
+    public ResponseEntity<UserResponseDto<UserTokenResponseDto>> kakaoLogin(@RequestHeader String code) throws JsonProcessingException {
+        String accessToken = userServiceImpl.getAccessToken(code);
         UserSocialResponseDto kakaoUser = userServiceImpl.getKakaoUserInfo(accessToken);
         User registeredKakaoUser = userServiceImpl.registerKakaoUser(kakaoUser);
         String jwtAccessToken = userServiceImpl.createToken(registeredKakaoUser);
