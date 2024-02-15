@@ -1,15 +1,17 @@
 package com.wee.demo.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.wee.demo.domain.User;
+import com.wee.demo.dto.request.UserSocialLoginRequestDto;
+import com.wee.demo.dto.response.UserSocialResponseDto;
 import com.wee.demo.dto.response.UserTokenResponseDto;
 import com.wee.demo.repository.UserRepository;
-import com.wee.demo.dto.request.UserDto;
-import com.wee.demo.dto.request.UserLoginDto;
-import com.wee.demo.dto.request.UserUpdateDto;
+import com.wee.demo.dto.request.UserRequestDto;
+import com.wee.demo.dto.request.UserLoginRequestDto;
+import com.wee.demo.dto.request.UserUpdateRequestDto;
 import com.wee.demo.dto.response.UserResponseDto;
 import com.wee.demo.service.UserService;
-import io.jsonwebtoken.JwtException;
-import io.jsonwebtoken.Jwts;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -34,17 +36,16 @@ public class UserController {
     private String jwtSecret;
 
     @PostMapping("/register")
-    public ResponseEntity<UserResponseDto<UserDto>> register(@RequestBody com.wee.demo.dto.request.UserDto userDto) {
-        UserDto registeredUserDto = customUserDetailsService.register(userDto);
-        UserResponseDto<UserDto> response = new UserResponseDto<>(200, "success", registeredUserDto);
-        System.out.println(registeredUserDto);
+    public ResponseEntity<UserResponseDto<UserRequestDto>> register(@RequestBody UserRequestDto userRequestDto) {
+        UserRequestDto registeredUserRequestDto = customUserDetailsService.register(userRequestDto);
+        UserResponseDto<UserRequestDto> response = new UserResponseDto<>(200, "success", registeredUserRequestDto);
+        System.out.println(registeredUserRequestDto);
         return ResponseEntity.ok(response);
     }
     @PostMapping("/login")
-    public ResponseEntity<UserResponseDto<UserTokenResponseDto>> login(@RequestBody UserLoginDto loginDto) {
+    public ResponseEntity<UserResponseDto<UserTokenResponseDto>> login(@RequestBody UserLoginRequestDto loginDto) {
         UserTokenResponseDto userTokenResponseDto = userServiceImpl.login(loginDto.getEmail(), loginDto.getPassword());
         UserResponseDto<UserTokenResponseDto> response = new UserResponseDto<>(200, "success", userTokenResponseDto);
-
         HttpHeaders headers = new HttpHeaders();
         headers.add("Authorization", "Bearer "+userTokenResponseDto.getAccessToken());
         return new ResponseEntity<>(response, headers, HttpStatus.OK);
@@ -61,8 +62,8 @@ public class UserController {
         }
     }
     @PatchMapping("/mypage")
-    public ResponseEntity<UserResponseDto<User>> updateUser(@RequestParam Long userId, @RequestBody UserUpdateDto userUpdateDto, @RequestHeader("Authorization") String authorizationHeader) {
-        User user = userServiceImpl.updateUser(userId, userUpdateDto);
+    public ResponseEntity<UserResponseDto<User>> updateUser(@RequestParam Long userId, @RequestBody UserUpdateRequestDto userUpdateRequestDto, @RequestHeader("Authorization") String authorizationHeader) {
+        User user = userServiceImpl.updateUser(userId, userUpdateRequestDto);
         UserResponseDto<User> response = new UserResponseDto<>(200, "success", user);
         return ResponseEntity.ok(response);
     }
@@ -71,5 +72,22 @@ public class UserController {
         userServiceImpl.withdrawUser(userId, password);
         UserResponseDto<?> response = new UserResponseDto<>(200, "success", null);
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/login/kakao/callback")
+    public UserSocialResponseDto kakaoLoginCallback (@RequestParam String code, HttpServletResponse response) throws JsonProcessingException {
+        return userServiceImpl.kakaoLogin(code, response);
+    }
+    @PostMapping("/login/kakao")
+    public ResponseEntity<UserResponseDto<UserTokenResponseDto>> kakaoLogin(@RequestHeader("Authorization") String accessToken) throws JsonProcessingException {
+        UserSocialResponseDto kakaoUser = userServiceImpl.getKakaoUserInfo(accessToken);
+        User registeredKakaoUser = userServiceImpl.registerKakaoUser(kakaoUser);
+        String jwtAccessToken = userServiceImpl.createToken(registeredKakaoUser);
+        String jwtRefreshToken = userServiceImpl.createRefreshToken(registeredKakaoUser);
+        UserTokenResponseDto userTokenResponseDto = new UserTokenResponseDto(jwtAccessToken, jwtRefreshToken);
+        UserResponseDto<UserTokenResponseDto> response = new UserResponseDto<>(200, "success", userTokenResponseDto);
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Authorization", "Bearer "+jwtAccessToken);
+        return new ResponseEntity<>(response, headers, HttpStatus.OK);
     }
 }

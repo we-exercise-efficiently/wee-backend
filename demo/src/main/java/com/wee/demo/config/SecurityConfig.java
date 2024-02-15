@@ -23,10 +23,8 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
         return httpSecurity
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                // RestAPI 이므로 basic auth 및 csrf 보안을 사용하지 않음
                 .httpBasic(httpBasic -> httpBasic.disable())
                 .csrf(csrf -> csrf.disable())
-                // JWT를 사용하기 때문에 세션을 사용하지 않음
                 .sessionManagement(sessionManagement ->
                         sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
@@ -34,7 +32,9 @@ public class SecurityConfig {
                                 "/",
                                 "/wee",
                                 "/wee/user/register",
-                                "/wee/user/login",
+                                "/wee/user/login/**",
+                                "https://kauth.kakao.com/oauth/token",
+                                "https://kapi.kakao.com/v2/user/me",
                                 "/wee/user/mypage/**").permitAll()
                         .anyRequest().authenticated()).build();
     }
