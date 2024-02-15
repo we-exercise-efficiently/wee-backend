@@ -35,7 +35,8 @@ public class SecurityConfig {
                                 "/wee",
                                 "/wee/user/register",
                                 "/wee/user/login",
-                                "/wee/user/mypage/**").permitAll()
+                                "/wee/user/mypage/**",
+                                "/wee/comm/question/**").permitAll()
                         .anyRequest().authenticated()).build();
     }
     @Bean
