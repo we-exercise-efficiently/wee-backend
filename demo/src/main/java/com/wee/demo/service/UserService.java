@@ -3,7 +3,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wee.demo.domain.User;
-import com.wee.demo.dto.request.UserSocialLoginRequestDto;
 import com.wee.demo.dto.response.UserSocialResponseDto;
 import com.wee.demo.dto.response.UserTokenResponseDto;
 import com.wee.demo.repository.UserRepository;
@@ -11,25 +10,17 @@ import com.wee.demo.dto.request.UserRequestDto;
 import com.wee.demo.dto.request.UserUpdateRequestDto;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.http.HttpHeaders;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -58,6 +49,12 @@ public class UserService {
     private String clientSecretNaver;
     @Value("${naver.redirect.url}")
     private String redirectUrlNaver;
+    @Value("${google.client.id}")
+    private String clientIdGoogle;
+    @Value("${google.client.secret}")
+    private String clientSecretGoogle;
+    @Value("${google.redirect.url}")
+    private String redirectUrlGoogle;
 
     @Transactional
     public UserRequestDto register(UserRequestDto userRequestDto) {
@@ -110,16 +107,7 @@ public class UserService {
         }
         userRepository.deleteByUserId(userId);
     }
-
-    public UserSocialResponseDto kakaoLogin(String code, HttpServletResponse response) throws JsonProcessingException {
-        String accessToken = getAccessToken(code);
-        UserSocialResponseDto kakaoUserInfo = getKakaoUserInfo(accessToken);
-        User kakaoUser = registerKakaoUser(kakaoUserInfo);
-        Authentication authentication = forceLogin(kakaoUser);
-        kakaoUserAuthorization(authentication, response);
-        return kakaoUserInfo;
-    }
-    public String getAccessToken(String code) throws JsonProcessingException {
+    public String getAccessTokenKakao(String code) throws JsonProcessingException {
         HttpHeaders headers = new HttpHeaders();
         headers.add("Content-type", "application/x-www-form-urlencoded;charset=utf-8");
         MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
@@ -141,7 +129,7 @@ public class UserService {
         JsonNode jsonNode = objectMapper.readTree(resposeBody);
         return jsonNode.get("access_token").asText();
     }
-    public UserSocialResponseDto getKakaoUserInfo(String accessToken) throws JsonProcessingException {
+    public UserSocialResponseDto getUserInfoKakao(String accessToken) throws JsonProcessingException {
         HttpHeaders headers = new HttpHeaders();
         headers.add("Authorization", "Bearer " + accessToken);
         headers.add("Content-type", "application/x-www-form-urlencoded;charset=utf-8");
@@ -162,7 +150,7 @@ public class UserService {
                 .get("nickname").asText();
         return new UserSocialResponseDto(userId, email, nickname);
     }
-    public User registerKakaoUser(UserSocialResponseDto kakaoUserInfo) {
+    public User registerUserKakao(UserSocialResponseDto kakaoUserInfo) {
         String kakaoEmail = kakaoUserInfo.getEmail();
         if (kakaoEmail == null) {
             kakaoEmail = UUID.randomUUID().toString() + "@wee.com";
@@ -179,31 +167,7 @@ public class UserService {
         }
         return kakaoUser;
     }
-    private Authentication forceLogin(User kakaoUser) {
-        Authentication authentication = new UsernamePasswordAuthenticationToken(kakaoUser, null, kakaoUser.getAuthorities());
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        return authentication;
-    }
-    private void kakaoUserAuthorization(Authentication authentication, HttpServletResponse response) {
-        User user = (User) authentication.getPrincipal();
-        String token = Jwts.builder()
-                .setSubject(user.getEmail())  // 'email'을 주제로 설정
-                .setExpiration(new Date(System.currentTimeMillis() + 24 * 60 * 60 * 1000))  // 만료 시간을 1시간으로 설정
-                .signWith(SignatureAlgorithm.HS512, Base64.getEncoder().encodeToString(jwtSecret.getBytes()))  // 시크릿 키로 서명
-                .compact();
-        response.addHeader("Authorization", "BEARER" + " " + token);
-    }
-    public String getCodeNaver() throws URISyntaxException, MalformedURLException, UnsupportedEncodingException {
-        UriComponents uriComponents = UriComponentsBuilder
-                .fromUriString("https://nid.naver.com/oauth2.0/authorize")
-                .queryParam("response_type", "code")
-                .queryParam("client_id", clientIdNaver)
-                .queryParam("redirect_uri", URLEncoder.encode(redirectUrlNaver, "UTF-8"))
-                .queryParam("state", URLEncoder.encode("1234", "UTF-8"))
-                .build();
-        return uriComponents.toString();
-    }
-    public String getAccessTokenNaver(String code) throws UnsupportedEncodingException, JsonProcessingException {
+    public String getAccessTokenNaver(String code) throws UnsupportedEncodingException{
         UriComponents uriComponents = UriComponentsBuilder
                     .fromUriString("https://nid.naver.com/oauth2.0/token")
                     .queryParam("grant_type", "authorization_code")
@@ -219,9 +183,9 @@ public class UserService {
                 con.setRequestMethod("GET");
                 int responseCode = con.getResponseCode();
                 BufferedReader br;
-                if(responseCode==200) { // 정상 호출
+                if(responseCode==200) {
                     br = new BufferedReader(new InputStreamReader(con.getInputStream()));
-                } else {  // 에러 발생
+                } else {
                     br = new BufferedReader(new InputStreamReader(con.getErrorStream()));
                 }
                 String inputLine;
@@ -230,8 +194,6 @@ public class UserService {
                     response.append(inputLine);
                 }
                 br.close();
-                System.out.println("response: "+response);
-//                return response.toString();
                 String responseBody = response.toString();
                 ObjectMapper objectMapper = new ObjectMapper();
                 JsonNode jsonNode = objectMapper.readTree(responseBody);
@@ -256,13 +218,12 @@ public class UserService {
         String responseBody = response.getBody();
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode responseNode = objectMapper.readTree(responseBody).get("response");
-        System.out.println("responseNode: "+responseNode);
         Long userId = responseNode.get("id").asLong();
         String email = responseNode.get("email").asText();
         String nickname = responseNode.get("name").asText();
         return new UserSocialResponseDto(userId, email, nickname);
     }
-    public User registerNaverUser(UserSocialResponseDto naverUserInfo) {
+    public User registerUserNaver(UserSocialResponseDto naverUserInfo) {
         String kakaoEmail = naverUserInfo.getEmail();
         if (kakaoEmail == null) {
             kakaoEmail = UUID.randomUUID().toString() + "@wee.com";
@@ -270,7 +231,6 @@ public class UserService {
         String nickname = naverUserInfo.getNickname();
         User naverUser = userRepository.findByEmail(kakaoEmail)
                 .orElse(null);
-        System.out.println("kakaoUser: " + naverUser);
         if (naverUser == null) {
             String password = UUID.randomUUID().toString();
             String encodedPassword = passwordEncoder.encode(password);
@@ -279,7 +239,70 @@ public class UserService {
         }
         return naverUser;
     }
-    public String createToken(User user) {
+    public Map<String, String> getAccessTokenGoogle(String code) throws JsonProcessingException {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+        MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
+        body.add("grant_type", "authorization_code");
+        body.add("client_id", clientIdGoogle);
+        body.add("client_secret", clientSecretGoogle);
+        body.add("redirect_uri", redirectUrlGoogle);
+        body.add("code", code);
+        HttpEntity<MultiValueMap<String, String>> requestEntity = new HttpEntity<>(body, headers);
+        RestTemplate restTemplate = new RestTemplate();
+        ResponseEntity<String> responseEntity = restTemplate.postForEntity("https://oauth2.googleapis.com/token", requestEntity, String.class);
+        if (responseEntity.getStatusCode() == HttpStatus.OK) {
+            String responseBody = responseEntity.getBody();
+            System.out.println("response body: "+responseBody);
+            ObjectMapper objectMapper = new ObjectMapper();
+            JsonNode jsonNode = objectMapper.readTree(responseBody);
+            Map<String, String> tokens = new HashMap<>();
+            tokens.put("access_token", jsonNode.get("access_token").asText());
+            tokens.put("id_token", jsonNode.get("id_token").asText());
+            return tokens;
+        } else {
+            System.out.println("Error occurred while requesting access token: " + responseEntity.getStatusCode());
+            return null;
+        }
+    }
+    public UserSocialResponseDto getUserInfoGoogle(Map<String, String> tokens) throws JsonProcessingException {
+        String accessToken = tokens.get("access_token");
+        String idToken = tokens.get("id_token");
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Authorization", "Bearer " + accessToken);
+        headers.add("Content-type", "application/x-www-form-urlencoded;charset=utf-8");
+        HttpEntity<MultiValueMap<String, String>> naverUserInfoRequest = new HttpEntity<>(headers);
+        RestTemplate rt = new RestTemplate();
+        ResponseEntity<String> response = rt.exchange(
+                "https://oauth2.googleapis.com/tokeninfo?id_token=" + idToken,
+                HttpMethod.GET,
+                naverUserInfoRequest,
+                String.class
+        );
+        String responseBody = response.getBody();
+        System.out.println("response body: "+responseBody);
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode jsonNode = objectMapper.readTree(responseBody);
+        String userIdString = jsonNode.get("sub").asText();
+        Long userId = (long) userIdString.hashCode();
+        String email = UUID.randomUUID().toString() + "@wee.com";
+        String nickname = jsonNode.get("name").asText();
+        return new UserSocialResponseDto(userId, email, nickname);
+    }
+    public User registerUserGoogle(UserSocialResponseDto googleUserInfo) {
+        String googleEmail = googleUserInfo.getEmail();
+        String nickname = googleUserInfo.getNickname();
+        User googleUser = userRepository.findByEmail(googleEmail)
+                .orElse(null);
+        if (googleUser == null) {
+            String password = UUID.randomUUID().toString();
+            String encodedPassword = passwordEncoder.encode(password);
+            googleUser = new User(nickname, googleEmail, encodedPassword);
+            userRepository.save(googleUser);
+        }
+        return googleUser;
+    }
+    public String createAccessToken(User user) {
         Date now = new Date();
         return Jwts.builder()
                 .setSubject(user.getEmail())
