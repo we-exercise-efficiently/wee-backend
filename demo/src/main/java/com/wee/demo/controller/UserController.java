@@ -1,6 +1,8 @@
 package com.wee.demo.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wee.demo.domain.User;
 import com.wee.demo.dto.request.UserSocialLoginRequestDto;
 import com.wee.demo.dto.response.UserSocialResponseDto;
@@ -21,6 +23,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.util.Base64;
 import java.util.Optional;
 
@@ -78,6 +83,14 @@ public class UserController {
     public UserSocialResponseDto kakaoLoginCallback (@RequestParam String code, HttpServletResponse response) throws JsonProcessingException {
         return userServiceImpl.kakaoLogin(code, response);
     }
+    @GetMapping("/login/naver/code")
+    public String getCodeNaver() throws MalformedURLException, UnsupportedEncodingException, URISyntaxException {
+        return userServiceImpl.getCodeNaver();
+    }
+    @GetMapping("/login/naver/token")
+    public String naverLogin(@RequestHeader("code") String code) throws Exception {
+        return userServiceImpl.getAccessTokenNaver(code);
+    }
     @PostMapping("/login/kakao")
     public ResponseEntity<UserResponseDto<UserTokenResponseDto>> kakaoLogin(@RequestHeader("code") String code) throws JsonProcessingException {
         String accessToken = userServiceImpl.getAccessToken(code);
@@ -85,6 +98,20 @@ public class UserController {
         User registeredKakaoUser = userServiceImpl.registerKakaoUser(kakaoUser);
         String jwtAccessToken = userServiceImpl.createToken(registeredKakaoUser);
         String jwtRefreshToken = userServiceImpl.createRefreshToken(registeredKakaoUser);
+        UserTokenResponseDto userTokenResponseDto = new UserTokenResponseDto(jwtAccessToken, jwtRefreshToken);
+        UserResponseDto<UserTokenResponseDto> response = new UserResponseDto<>(200, "success", userTokenResponseDto);
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Authorization", "Bearer "+jwtAccessToken);
+        return new ResponseEntity<>(response, headers, HttpStatus.OK);
+    }
+    @GetMapping("/login/naver")
+    public ResponseEntity<UserResponseDto<UserTokenResponseDto>> getAccessTokenNaver(@RequestHeader("code") String code) throws Exception {
+        String accessToken = userServiceImpl.getAccessTokenNaver(code);
+        UserSocialResponseDto naverUser = userServiceImpl.getUserInfoNaver(accessToken);
+        User registeredNaverUser = userServiceImpl.registerNaverUser(naverUser);
+        System.out.println("registeredNaverUser: " + registeredNaverUser);
+        String jwtAccessToken = userServiceImpl.createToken(registeredNaverUser);
+        String jwtRefreshToken = userServiceImpl.createRefreshToken(registeredNaverUser);
         UserTokenResponseDto userTokenResponseDto = new UserTokenResponseDto(jwtAccessToken, jwtRefreshToken);
         UserResponseDto<UserTokenResponseDto> response = new UserResponseDto<>(200, "success", userTokenResponseDto);
         HttpHeaders headers = new HttpHeaders();

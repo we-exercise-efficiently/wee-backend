@@ -30,6 +30,13 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.http.HttpHeaders;
+import org.springframework.web.util.UriComponents;
+import org.springframework.web.util.UriComponentsBuilder;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
+import java.net.*;
 import java.util.*;
 
 @Service
@@ -45,6 +52,12 @@ public class UserService {
     private String clientSecret;
     @Value("${kakao.redirect.url}")
     private String redirectUrl;
+    @Value("${naver.client.id}")
+    private String clientIdNaver;
+    @Value("${naver.client.secret}")
+    private String clientSecretNaver;
+    @Value("${naver.redirect.url}")
+    private String redirectUrlNaver;
 
     @Transactional
     public UserRequestDto register(UserRequestDto userRequestDto) {
@@ -179,6 +192,92 @@ public class UserService {
                 .signWith(SignatureAlgorithm.HS512, Base64.getEncoder().encodeToString(jwtSecret.getBytes()))  // 시크릿 키로 서명
                 .compact();
         response.addHeader("Authorization", "BEARER" + " " + token);
+    }
+    public String getCodeNaver() throws URISyntaxException, MalformedURLException, UnsupportedEncodingException {
+        UriComponents uriComponents = UriComponentsBuilder
+                .fromUriString("https://nid.naver.com/oauth2.0/authorize")
+                .queryParam("response_type", "code")
+                .queryParam("client_id", clientIdNaver)
+                .queryParam("redirect_uri", URLEncoder.encode(redirectUrlNaver, "UTF-8"))
+                .queryParam("state", URLEncoder.encode("1234", "UTF-8"))
+                .build();
+        return uriComponents.toString();
+    }
+    public String getAccessTokenNaver(String code) throws UnsupportedEncodingException, JsonProcessingException {
+        UriComponents uriComponents = UriComponentsBuilder
+                    .fromUriString("https://nid.naver.com/oauth2.0/token")
+                    .queryParam("grant_type", "authorization_code")
+                    .queryParam("client_id", clientIdNaver)
+                    .queryParam("client_secret", clientSecretNaver)
+                    .queryParam("code", code)
+                    .queryParam("state", URLEncoder.encode("1234", "UTF-8"))
+                    .build();
+
+            try {
+                URL url = new URL(uriComponents.toString());
+                HttpURLConnection con = (HttpURLConnection)url.openConnection();
+                con.setRequestMethod("GET");
+                int responseCode = con.getResponseCode();
+                BufferedReader br;
+                if(responseCode==200) { // 정상 호출
+                    br = new BufferedReader(new InputStreamReader(con.getInputStream()));
+                } else {  // 에러 발생
+                    br = new BufferedReader(new InputStreamReader(con.getErrorStream()));
+                }
+                String inputLine;
+                StringBuffer response = new StringBuffer();
+                while ((inputLine = br.readLine()) != null) {
+                    response.append(inputLine);
+                }
+                br.close();
+                System.out.println("response: "+response);
+//                return response.toString();
+                String responseBody = response.toString();
+                ObjectMapper objectMapper = new ObjectMapper();
+                JsonNode jsonNode = objectMapper.readTree(responseBody);
+                return jsonNode.get("access_token").asText();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+    public UserSocialResponseDto getUserInfoNaver(String accessToken) throws JsonProcessingException {
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Authorization", "Bearer " + accessToken);
+        headers.add("Content-type", "application/x-www-form-urlencoded;charset=utf-8");
+        HttpEntity<MultiValueMap<String, String>> naverUserInfoRequest = new HttpEntity<>(headers);
+        RestTemplate rt = new RestTemplate();
+        ResponseEntity<String> response = rt.exchange(
+                "https://openapi.naver.com/v1/nid/me",
+                HttpMethod.GET,
+                naverUserInfoRequest,
+                String.class
+        );
+        String responseBody = response.getBody();
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode responseNode = objectMapper.readTree(responseBody).get("response");
+        System.out.println("responseNode: "+responseNode);
+        Long userId = responseNode.get("id").asLong();
+        String email = responseNode.get("email").asText();
+        String nickname = responseNode.get("name").asText();
+        return new UserSocialResponseDto(userId, email, nickname);
+    }
+    public User registerNaverUser(UserSocialResponseDto naverUserInfo) {
+        String kakaoEmail = naverUserInfo.getEmail();
+        if (kakaoEmail == null) {
+            kakaoEmail = UUID.randomUUID().toString() + "@wee.com";
+        }
+        String nickname = naverUserInfo.getNickname();
+        User naverUser = userRepository.findByEmail(kakaoEmail)
+                .orElse(null);
+        System.out.println("kakaoUser: " + naverUser);
+        if (naverUser == null) {
+            String password = UUID.randomUUID().toString();
+            String encodedPassword = passwordEncoder.encode(password);
+            naverUser = new User(nickname, kakaoEmail, encodedPassword);
+            userRepository.save(naverUser);
+        }
+        return naverUser;
     }
     public String createToken(User user) {
         Date now = new Date();
