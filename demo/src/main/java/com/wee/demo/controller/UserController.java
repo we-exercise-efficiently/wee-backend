@@ -2,7 +2,6 @@ package com.wee.demo.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.wee.demo.domain.User;
-import com.wee.demo.dto.request.UserSocialLoginRequestDto;
 import com.wee.demo.dto.response.UserSocialResponseDto;
 import com.wee.demo.dto.response.UserTokenResponseDto;
 import com.wee.demo.repository.UserRepository;
@@ -11,17 +10,16 @@ import com.wee.demo.dto.request.UserLoginRequestDto;
 import com.wee.demo.dto.request.UserUpdateRequestDto;
 import com.wee.demo.dto.response.UserResponseDto;
 import com.wee.demo.service.UserService;
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Base64;
+import java.io.UnsupportedEncodingException;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -73,18 +71,39 @@ public class UserController {
         UserResponseDto<?> response = new UserResponseDto<>(200, "success", null);
         return ResponseEntity.ok(response);
     }
-
-    @GetMapping("/login/kakao/callback")
-    public UserSocialResponseDto kakaoLoginCallback (@RequestParam String code, HttpServletResponse response) throws JsonProcessingException {
-        return userServiceImpl.kakaoLogin(code, response);
-    }
     @PostMapping("/login/kakao")
     public ResponseEntity<UserResponseDto<UserTokenResponseDto>> kakaoLogin(@RequestHeader("code") String code) throws JsonProcessingException {
-        String accessToken = userServiceImpl.getAccessToken(code);
-        UserSocialResponseDto kakaoUser = userServiceImpl.getKakaoUserInfo(accessToken);
-        User registeredKakaoUser = userServiceImpl.registerKakaoUser(kakaoUser);
-        String jwtAccessToken = userServiceImpl.createToken(registeredKakaoUser);
+        String accessToken = userServiceImpl.getAccessTokenKakao(code);
+        UserSocialResponseDto kakaoUser = userServiceImpl.getUserInfoKakao(accessToken);
+        User registeredKakaoUser = userServiceImpl.registerUserKakao(kakaoUser);
+        String jwtAccessToken = userServiceImpl.createAccessToken(registeredKakaoUser);
         String jwtRefreshToken = userServiceImpl.createRefreshToken(registeredKakaoUser);
+        UserTokenResponseDto userTokenResponseDto = new UserTokenResponseDto(jwtAccessToken, jwtRefreshToken);
+        UserResponseDto<UserTokenResponseDto> response = new UserResponseDto<>(200, "success", userTokenResponseDto);
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Authorization", "Bearer "+jwtAccessToken);
+        return new ResponseEntity<>(response, headers, HttpStatus.OK);
+    }
+    @PostMapping("/login/naver")
+    public ResponseEntity<UserResponseDto<UserTokenResponseDto>> naverLogin(@RequestHeader("code") String code) throws Exception {
+        String accessToken = userServiceImpl.getAccessTokenNaver(code);
+        UserSocialResponseDto naverUser = userServiceImpl.getUserInfoNaver(accessToken);
+        User registeredNaverUser = userServiceImpl.registerUserNaver(naverUser);
+        String jwtAccessToken = userServiceImpl.createAccessToken(registeredNaverUser);
+        String jwtRefreshToken = userServiceImpl.createRefreshToken(registeredNaverUser);
+        UserTokenResponseDto userTokenResponseDto = new UserTokenResponseDto(jwtAccessToken, jwtRefreshToken);
+        UserResponseDto<UserTokenResponseDto> response = new UserResponseDto<>(200, "success", userTokenResponseDto);
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Authorization", "Bearer "+jwtAccessToken);
+        return new ResponseEntity<>(response, headers, HttpStatus.OK);
+    }
+    @PostMapping("/login/google")
+    public ResponseEntity<UserResponseDto<UserTokenResponseDto>> googleLogin(@RequestParam("code") String code) throws JsonProcessingException, UnsupportedEncodingException {
+        Map<String, String> tokens = userServiceImpl.getAccessTokenGoogle(code);
+        UserSocialResponseDto naverUser = userServiceImpl.getUserInfoGoogle(tokens);
+        User registeredNaverUser = userServiceImpl.registerUserGoogle(naverUser);
+        String jwtAccessToken = userServiceImpl.createAccessToken(registeredNaverUser);
+        String jwtRefreshToken = userServiceImpl.createRefreshToken(registeredNaverUser);
         UserTokenResponseDto userTokenResponseDto = new UserTokenResponseDto(jwtAccessToken, jwtRefreshToken);
         UserResponseDto<UserTokenResponseDto> response = new UserResponseDto<>(200, "success", userTokenResponseDto);
         HttpHeaders headers = new HttpHeaders();
