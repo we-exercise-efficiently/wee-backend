@@ -9,6 +9,7 @@ import com.wee.demo.dto.request.UserRequestDto;
 import com.wee.demo.dto.request.UserLoginRequestDto;
 import com.wee.demo.dto.request.UserUpdateRequestDto;
 import com.wee.demo.dto.response.UserResponseDto;
+import com.wee.demo.service.SocialLoginService;
 import com.wee.demo.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +20,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.util.Map;
 import java.util.Optional;
 
@@ -30,8 +33,7 @@ public class UserController {
     private final UserService customUserDetailsService;
     private final UserService userServiceImpl;
     private final UserRepository userRepository;
-    @Value("${jwt.secret}")
-    private String jwtSecret;
+    private final SocialLoginService socialLoginService;
 
     @PostMapping("/register")
     public ResponseEntity<UserResponseDto<UserRequestDto>> register(@RequestBody UserRequestDto userRequestDto) {
@@ -42,7 +44,7 @@ public class UserController {
     }
     @PostMapping("/login")
     public ResponseEntity<UserResponseDto<UserTokenResponseDto>> login(@RequestBody UserLoginRequestDto loginDto) {
-        UserTokenResponseDto userTokenResponseDto = userServiceImpl.login(loginDto.getEmail(), loginDto.getPassword());
+        UserTokenResponseDto userTokenResponseDto = userServiceImpl.login(loginDto.getEmail(), loginDto.getPassword(), "login");
         UserResponseDto<UserTokenResponseDto> response = new UserResponseDto<>(200, "success", userTokenResponseDto);
         HttpHeaders headers = new HttpHeaders();
         headers.add("Authorization", "Bearer "+userTokenResponseDto.getAccessToken());
@@ -73,41 +75,39 @@ public class UserController {
     }
     @PostMapping("/login/kakao")
     public ResponseEntity<UserResponseDto<UserTokenResponseDto>> kakaoLogin(@RequestHeader("code") String code) throws JsonProcessingException {
-        String accessToken = userServiceImpl.getAccessTokenKakao(code);
-        UserSocialResponseDto kakaoUser = userServiceImpl.getUserInfoKakao(accessToken);
-        User registeredKakaoUser = userServiceImpl.registerUserKakao(kakaoUser);
-        String jwtAccessToken = userServiceImpl.createAccessToken(registeredKakaoUser);
-        String jwtRefreshToken = userServiceImpl.createRefreshToken(registeredKakaoUser);
-        UserTokenResponseDto userTokenResponseDto = new UserTokenResponseDto(jwtAccessToken, jwtRefreshToken);
+        String accessToken = socialLoginService.getAccessTokenKakao(code);
+        UserSocialResponseDto kakaoUser = socialLoginService.getUserInfoKakao(accessToken);
+        User registeredKakaoUser = userServiceImpl.registerUser(kakaoUser, "Kakao");
+        System.out.println("registered user:" + registeredKakaoUser);
+        // 강제 로그인 처리
+        UserTokenResponseDto userTokenResponseDto = userServiceImpl.login(registeredKakaoUser.getEmail(), registeredKakaoUser.getPassword(), "socialLogin");
         UserResponseDto<UserTokenResponseDto> response = new UserResponseDto<>(200, "success", userTokenResponseDto);
         HttpHeaders headers = new HttpHeaders();
-        headers.add("Authorization", "Bearer "+jwtAccessToken);
+        headers.add("Authorization", "Bearer "+userTokenResponseDto.getAccessToken());
         return new ResponseEntity<>(response, headers, HttpStatus.OK);
     }
     @PostMapping("/login/naver")
     public ResponseEntity<UserResponseDto<UserTokenResponseDto>> naverLogin(@RequestHeader("code") String code) throws Exception {
-        String accessToken = userServiceImpl.getAccessTokenNaver(code);
-        UserSocialResponseDto naverUser = userServiceImpl.getUserInfoNaver(accessToken);
-        User registeredNaverUser = userServiceImpl.registerUserNaver(naverUser);
-        String jwtAccessToken = userServiceImpl.createAccessToken(registeredNaverUser);
-        String jwtRefreshToken = userServiceImpl.createRefreshToken(registeredNaverUser);
-        UserTokenResponseDto userTokenResponseDto = new UserTokenResponseDto(jwtAccessToken, jwtRefreshToken);
+        String accessToken = socialLoginService.getAccessTokenNaver(code);
+        UserSocialResponseDto naverUser = socialLoginService.getUserInfoNaver(accessToken);
+        User registeredNaverUser = userServiceImpl.registerUser(naverUser, "Naver");
+        System.out.println("registered user:" + registeredNaverUser);
+        UserTokenResponseDto userTokenResponseDto = userServiceImpl.login(registeredNaverUser.getEmail(), registeredNaverUser.getPassword(), "socialLogin");
         UserResponseDto<UserTokenResponseDto> response = new UserResponseDto<>(200, "success", userTokenResponseDto);
         HttpHeaders headers = new HttpHeaders();
-        headers.add("Authorization", "Bearer "+jwtAccessToken);
+        headers.add("Authorization", "Bearer "+userTokenResponseDto.getAccessToken());
         return new ResponseEntity<>(response, headers, HttpStatus.OK);
     }
     @PostMapping("/login/google")
-    public ResponseEntity<UserResponseDto<UserTokenResponseDto>> googleLogin(@RequestParam("code") String code) throws JsonProcessingException, UnsupportedEncodingException {
-        Map<String, String> tokens = userServiceImpl.getAccessTokenGoogle(code);
-        UserSocialResponseDto naverUser = userServiceImpl.getUserInfoGoogle(tokens);
-        User registeredNaverUser = userServiceImpl.registerUserGoogle(naverUser);
-        String jwtAccessToken = userServiceImpl.createAccessToken(registeredNaverUser);
-        String jwtRefreshToken = userServiceImpl.createRefreshToken(registeredNaverUser);
-        UserTokenResponseDto userTokenResponseDto = new UserTokenResponseDto(jwtAccessToken, jwtRefreshToken);
+    public ResponseEntity<UserResponseDto<UserTokenResponseDto>> googleLogin(@RequestParam("code") String code) throws JsonProcessingException {
+        Map<String, String> tokens = socialLoginService.getAccessTokenGoogle(code);
+        UserSocialResponseDto googleUser = socialLoginService.getUserInfoGoogle(tokens);
+        User registeredGoogleUser = userServiceImpl.registerUser(googleUser, "Google");
+        System.out.println("registered user:" + registeredGoogleUser);
+        UserTokenResponseDto userTokenResponseDto = userServiceImpl.login(registeredGoogleUser.getEmail(), registeredGoogleUser.getPassword(), "socialLogin");
         UserResponseDto<UserTokenResponseDto> response = new UserResponseDto<>(200, "success", userTokenResponseDto);
         HttpHeaders headers = new HttpHeaders();
-        headers.add("Authorization", "Bearer "+jwtAccessToken);
+        headers.add("Authorization", "Bearer "+userTokenResponseDto.getAccessToken());
         return new ResponseEntity<>(response, headers, HttpStatus.OK);
     }
 }
