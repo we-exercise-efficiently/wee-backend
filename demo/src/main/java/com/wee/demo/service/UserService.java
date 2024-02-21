@@ -93,12 +93,8 @@ public class UserService {
         }
         String nickname = userInfo.getNickname();
         User user = null;
-        if (platform.equals("Google")) {  // Google: nickname으로 사용자를 찾음
-            user = userRepository.findByNickname(nickname).orElse(null);
-        } else {  // 카카오, 네이버: email로 사용자를 찾음
-            user = userRepository.findByEmail(email).orElse(null);
-        }
-        if (user == null) {  // 회원가입
+        user = userRepository.findByEmail(email).orElse(null);
+        if (user == null) {
             UserRequestDto userRequestDto = new UserRequestDto();
             userRequestDto.setEmail(email);
             userRequestDto.setNickname(nickname);
