@@ -29,6 +29,15 @@ jobs:
           WEE_DB_URL: ${{ secrets.WEE_DB_URL }}
           WEE_DB_USERNAME: ${{ secrets.WEE_DB_USERNAME }}
           WEE_DB_PASSWORD: ${{ secrets.WEE_DB_PASSWORD }}
+          KAKAO_CLIENT_ID: ${{ secrets.KAKAO_CLIENT_ID }}
+          KAKAO_CLIENT_SECRET: ${{ secrets.KAKAO_CLIENT_SECRET }}
+          KAKAO_REDIRECT_URL: ${{ secrets.KAKAO_REDIRECT_URL }}
+          NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
+          NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
+          NAVER_REDIRECT_URL: ${{ secrets.NAVER_REDIRECT_URL }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          GOOGLE_REDIRECT_URL: ${{ secrets.GOOGLE_REDIRECT_URL }}
 
       # Docker hub login
       - name: Docker login
@@ -68,5 +77,14 @@ jobs:
             -e WEE_DB_URL="${{ secrets.WEE_DB_URL }}" \
             -e WEE_DB_USERNAME="${{ secrets.WEE_DB_USERNAME }}" \
             -e WEE_DB_PASSWORD="${{ secrets.WEE_DB_PASSWORD }}" \
+            -e KAKAO_CLIENT_ID="${{ secrets.KAKAO_CLIENT_ID }}" \
+            -e KAKAO_CLIENT_SECRET="${{ secrets.KAKAO_CLIENT_SECRET }}" \
+            -e KAKAO_REDIRECT_URL="${{ secrets.KAKAO_REDIRECT_URL }}" \
+            -e NAVER_CLIENT_ID="${{ secrets.NAVER_CLIENT_ID }}" \
+            -e NAVER_CLIENT_SECRET="${{ secrets.NAVER_CLIENT_SECRET }}" \
+            -e NAVER_REDIRECT_URL="${{ secrets.NAVER_REDIRECT_URL }}" \
+            -e GOOGLE_CLIENT_ID="${{ secrets.GOOGLE_CLIENT_ID }}" \
+            -e GOOGLE_CLIENT_SECRET="${{ secrets.GOOGLE_CLIENT_SECRET }}" \
+            -e GOOGLE_REDIRECT_URL="${{ secrets.GOOGL_REDIRECT_URL }}" \
             --name wee-was ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKERHUB_REPONAME }}:be
 
