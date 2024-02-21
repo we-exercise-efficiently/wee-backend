@@ -2,6 +2,7 @@ package com.wee.demo.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.wee.demo.auth.AuthenticationFilter;
 import com.wee.demo.domain.User;
 import com.wee.demo.dto.response.UserSocialResponseDto;
 import com.wee.demo.dto.response.UserTokenResponseDto;
@@ -37,6 +38,7 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     @Value("${jwt.secret}")
     private String jwtSecret;
+//    AuthenticationFilter authenticationFilter = new AuthenticationFilter(jwtSecret);
 
     @Transactional
     public UserRequestDto register(UserRequestDto userRequestDto) {
@@ -54,15 +56,15 @@ public class UserService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
         if (loginType.equals("socialLogin")) {  // 소셜 로그인
-            String accessToken = createAccessToken(user);
-            String refreshToken = createRefreshToken(user);
+            String accessToken = AuthenticationFilter.createAccessToken(user);
+            String refreshToken = AuthenticationFilter.createRefreshToken(user);
             return new UserTokenResponseDto(accessToken, refreshToken);
         } else {  // 일반 로그인
             if (!passwordEncoder.matches(password, user.getPassword())) {
                 throw new BadCredentialsException("wrong password");
             }
-            String accessToken = createAccessToken(user);
-            String refreshToken = createRefreshToken(user);
+            String accessToken = AuthenticationFilter.createAccessToken(user);
+            String refreshToken = AuthenticationFilter.createRefreshToken(user);
             return new UserTokenResponseDto(accessToken, refreshToken);
         }
     }
@@ -104,22 +106,5 @@ public class UserService {
             user = userRepository.findById(userRequestDto.getUserId()).orElse(null);
         }
         return user;
-    }
-    public String createAccessToken(User user) {
-        Date now = new Date();
-        return Jwts.builder()
-                .setSubject(user.getEmail())
-                .setExpiration(new Date(System.currentTimeMillis() + 24 * 60 * 60 * 1000))  // 1시간
-                .signWith(SignatureAlgorithm.HS512, Base64.getEncoder().encodeToString(jwtSecret.getBytes()))
-                .compact();
-    }
-    public String createRefreshToken(User user) {
-        Date now = new Date();
-        return Jwts.builder()
-                .setSubject(user.getEmail())
-                .claim("isRefreshToken", true)
-                .setExpiration(new Date(System.currentTimeMillis() + 60 * 60 * 60 * 24 * 30 * 1000))  // 1개월
-                .signWith(SignatureAlgorithm.HS512, Base64.getEncoder().encodeToString(jwtSecret.getBytes()))
-                .compact();
     }
 }

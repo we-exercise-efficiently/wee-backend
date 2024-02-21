@@ -78,7 +78,6 @@ public class UserController {
         String accessToken = socialLoginService.getAccessTokenKakao(code);
         UserSocialResponseDto kakaoUser = socialLoginService.getUserInfoKakao(accessToken);
         User registeredKakaoUser = userServiceImpl.registerUser(kakaoUser, "Kakao");
-        System.out.println("registered user:" + registeredKakaoUser);
         // 강제 로그인 처리
         UserTokenResponseDto userTokenResponseDto = userServiceImpl.login(registeredKakaoUser.getEmail(), registeredKakaoUser.getPassword(), "socialLogin");
         UserResponseDto<UserTokenResponseDto> response = new UserResponseDto<>(200, "success", userTokenResponseDto);
@@ -91,7 +90,6 @@ public class UserController {
         String accessToken = socialLoginService.getAccessTokenNaver(code);
         UserSocialResponseDto naverUser = socialLoginService.getUserInfoNaver(accessToken);
         User registeredNaverUser = userServiceImpl.registerUser(naverUser, "Naver");
-        System.out.println("registered user:" + registeredNaverUser);
         UserTokenResponseDto userTokenResponseDto = userServiceImpl.login(registeredNaverUser.getEmail(), registeredNaverUser.getPassword(), "socialLogin");
         UserResponseDto<UserTokenResponseDto> response = new UserResponseDto<>(200, "success", userTokenResponseDto);
         HttpHeaders headers = new HttpHeaders();
@@ -103,7 +101,6 @@ public class UserController {
         Map<String, String> tokens = socialLoginService.getAccessTokenGoogle(code);
         UserSocialResponseDto googleUser = socialLoginService.getUserInfoGoogle(tokens);
         User registeredGoogleUser = userServiceImpl.registerUser(googleUser, "Google");
-        System.out.println("registered user:" + registeredGoogleUser);
         UserTokenResponseDto userTokenResponseDto = userServiceImpl.login(registeredGoogleUser.getEmail(), registeredGoogleUser.getPassword(), "socialLogin");
         UserResponseDto<UserTokenResponseDto> response = new UserResponseDto<>(200, "success", userTokenResponseDto);
         HttpHeaders headers = new HttpHeaders();
