@@ -2,7 +2,7 @@ package com.wee.demo.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.wee.demo.domain.User;
-import com.wee.demo.dto.response.UserSocialResponseDto;
+import com.wee.demo.dto.response.UserSocialLoginResponseDto;
 import com.wee.demo.dto.response.UserTokenResponseDto;
 import com.wee.demo.repository.UserRepository;
 import com.wee.demo.dto.request.UserRequestDto;
@@ -13,15 +13,11 @@ import com.wee.demo.service.SocialLoginService;
 import com.wee.demo.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.UnsupportedEncodingException;
-import java.net.MalformedURLException;
-import java.net.URISyntaxException;
 import java.util.Map;
 import java.util.Optional;
 
@@ -76,7 +72,7 @@ public class UserController {
     @PostMapping("/login/kakao")
     public ResponseEntity<UserResponseDto<UserTokenResponseDto>> kakaoLogin(@RequestHeader("code") String code) throws JsonProcessingException {
         String accessToken = socialLoginService.getAccessTokenKakao(code);
-        UserSocialResponseDto kakaoUser = socialLoginService.getUserInfoKakao(accessToken);
+        UserSocialLoginResponseDto kakaoUser = socialLoginService.getUserInfoKakao(accessToken);
         User registeredKakaoUser = userServiceImpl.registerUser(kakaoUser, "Kakao");
         // 강제 로그인 처리
         UserTokenResponseDto userTokenResponseDto = userServiceImpl.login(registeredKakaoUser.getEmail(), registeredKakaoUser.getPassword(), "socialLogin");
@@ -88,7 +84,7 @@ public class UserController {
     @PostMapping("/login/naver")
     public ResponseEntity<UserResponseDto<UserTokenResponseDto>> naverLogin(@RequestHeader("code") String code) throws Exception {
         String accessToken = socialLoginService.getAccessTokenNaver(code);
-        UserSocialResponseDto naverUser = socialLoginService.getUserInfoNaver(accessToken);
+        UserSocialLoginResponseDto naverUser = socialLoginService.getUserInfoNaver(accessToken);
         User registeredNaverUser = userServiceImpl.registerUser(naverUser, "Naver");
         UserTokenResponseDto userTokenResponseDto = userServiceImpl.login(registeredNaverUser.getEmail(), registeredNaverUser.getPassword(), "socialLogin");
         UserResponseDto<UserTokenResponseDto> response = new UserResponseDto<>(200, "success", userTokenResponseDto);
@@ -99,7 +95,7 @@ public class UserController {
     @PostMapping("/login/google")
     public ResponseEntity<UserResponseDto<UserTokenResponseDto>> googleLogin(@RequestParam("code") String code) throws JsonProcessingException {
         Map<String, String> tokens = socialLoginService.getAccessTokenGoogle(code);
-        UserSocialResponseDto googleUser = socialLoginService.getUserInfoGoogle(tokens);
+        UserSocialLoginResponseDto googleUser = socialLoginService.getUserInfoGoogle(tokens);
         User registeredGoogleUser = userServiceImpl.registerUser(googleUser, "Google");
         UserTokenResponseDto userTokenResponseDto = userServiceImpl.login(registeredGoogleUser.getEmail(), registeredGoogleUser.getPassword(), "socialLogin");
         UserResponseDto<UserTokenResponseDto> response = new UserResponseDto<>(200, "success", userTokenResponseDto);

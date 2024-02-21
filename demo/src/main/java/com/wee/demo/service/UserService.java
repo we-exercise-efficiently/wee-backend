@@ -1,34 +1,19 @@
 package com.wee.demo.service;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wee.demo.auth.AuthenticationFilter;
 import com.wee.demo.domain.User;
-import com.wee.demo.dto.response.UserSocialResponseDto;
+import com.wee.demo.dto.response.UserSocialLoginResponseDto;
 import com.wee.demo.dto.response.UserTokenResponseDto;
 import com.wee.demo.repository.UserRepository;
 import com.wee.demo.dto.request.UserRequestDto;
 import com.wee.demo.dto.request.UserUpdateRequestDto;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.*;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponents;
-import org.springframework.web.util.UriComponentsBuilder;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
-import java.net.*;
 import java.util.*;
 
 @Service
@@ -87,7 +72,7 @@ public class UserService {
         }
         userRepository.deleteByUserId(userId);
     }
-    public User registerUser(UserSocialResponseDto userInfo, String platform) {
+    public User registerUser(UserSocialLoginResponseDto userInfo, String platform) {
         System.out.println("userInfo: "+ userInfo);
         String email = userInfo.getEmail();
         if (email == null && platform.equals("Google")) {

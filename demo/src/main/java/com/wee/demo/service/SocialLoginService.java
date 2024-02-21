@@ -3,7 +3,7 @@ package com.wee.demo.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.wee.demo.dto.response.UserSocialResponseDto;
+import com.wee.demo.dto.response.UserSocialLoginResponseDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
@@ -68,7 +68,7 @@ public class SocialLoginService {
         JsonNode jsonNode = objectMapper.readTree(resposeBody);
         return jsonNode.get("access_token").asText();
     }
-    public UserSocialResponseDto getUserInfoKakao(String accessToken) throws JsonProcessingException {
+    public UserSocialLoginResponseDto getUserInfoKakao(String accessToken) throws JsonProcessingException {
         HttpHeaders headers = new HttpHeaders();
         headers.add("Authorization", "Bearer " + accessToken);
         headers.add("Content-type", "application/x-www-form-urlencoded;charset=utf-8");
@@ -87,7 +87,7 @@ public class SocialLoginService {
         String email = jsonNode.get("kakao_account").get("email").asText();
         String nickname = jsonNode.get("properties")
                 .get("nickname").asText();
-        return new UserSocialResponseDto(userId, nickname, email);
+        return new UserSocialLoginResponseDto(userId, nickname, email);
     }
     public String getAccessTokenNaver(String code) throws UnsupportedEncodingException {
         UriComponents uriComponents = UriComponentsBuilder
@@ -125,7 +125,7 @@ public class SocialLoginService {
         }
         return null;
     }
-    public UserSocialResponseDto getUserInfoNaver(String accessToken) throws JsonProcessingException {
+    public UserSocialLoginResponseDto getUserInfoNaver(String accessToken) throws JsonProcessingException {
         HttpHeaders headers = new HttpHeaders();
         headers.add("Authorization", "Bearer " + accessToken);
         headers.add("Content-type", "application/x-www-form-urlencoded;charset=utf-8");
@@ -143,7 +143,7 @@ public class SocialLoginService {
         Long userId = responseNode.get("id").asLong();
         String email = responseNode.get("email").asText();
         String nickname = responseNode.get("name").asText();
-        return new UserSocialResponseDto(userId, nickname, email);
+        return new UserSocialLoginResponseDto(userId, nickname, email);
     }
     public Map<String, String> getAccessTokenGoogle(String code) throws JsonProcessingException {
         HttpHeaders headers = new HttpHeaders();
@@ -171,7 +171,7 @@ public class SocialLoginService {
             return null;
         }
     }
-    public UserSocialResponseDto getUserInfoGoogle(Map<String, String> tokens) throws JsonProcessingException {
+    public UserSocialLoginResponseDto getUserInfoGoogle(Map<String, String> tokens) throws JsonProcessingException {
         String accessToken = tokens.get("access_token");
         String idToken = tokens.get("id_token");
         HttpHeaders headers = new HttpHeaders();
@@ -193,6 +193,6 @@ public class SocialLoginService {
         Long userId = (long) userIdString.hashCode();
         String email = UUID.randomUUID().toString() + "@wee.com";
         String nickname = jsonNode.get("name").asText();
-        return new UserSocialResponseDto(userId, nickname, email);
+        return new UserSocialLoginResponseDto(userId, nickname, email);
     }
 }
