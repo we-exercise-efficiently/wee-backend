@@ -26,7 +26,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-public class SocialLoginService {
+public class UserSocialLoginService {
     @Value("${kakao.client.id}")
     private String clientId;
     @Value("${kakao.client.secret}")

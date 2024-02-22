@@ -35,15 +35,13 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/",
                                 "/wee",
-                                "/wee/user/register",
+                                "/wee/user/register/**",
                                 "/wee/user/login/**",
                                 "/wee/user/mypage/**",
-                                "https://kauth.kakao.com/oauth/token",
-                                "https://kapi.kakao.com/v2/user/me",
-                                "https://nid.naver.com/oauth2.0/token",
-                                "https://openapi.naver.com/v1/nid/me",
-                                "https://oauth2.googleapis.com/token",
-                                "https://oauth2.googleapis.com/tokeninfo?id_token=",
+                                "wee/user/sendmail",
+                                "wee/user/verifymail",
+                                "wee/user/findemail",
+                                "wee/user/resetpassword",
                                 "/wee/comm/question/**").permitAll()
                         .anyRequest().authenticated()).build();
     }
