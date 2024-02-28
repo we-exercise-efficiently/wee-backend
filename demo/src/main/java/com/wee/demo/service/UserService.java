@@ -1,6 +1,7 @@
 package com.wee.demo.service;
 import com.wee.demo.auth.AuthenticationFilter;
 import com.wee.demo.domain.User;
+import com.wee.demo.dto.request.UserLoginRequestDto;
 import com.wee.demo.dto.response.UserSocialLoginResponseDto;
 import com.wee.demo.dto.response.UserTokenResponseDto;
 import com.wee.demo.repository.UserRepository;
@@ -21,9 +22,8 @@ import java.util.*;
 public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    @Value("${jwt.secret}")
-    private String jwtSecret;
-//    AuthenticationFilter authenticationFilter = new AuthenticationFilter(jwtSecret);
+    private final UserMailService userMailService;
+    private final Map<String, String> authCodes = new HashMap<>();
 
     @Transactional
     public UserRequestDto register(UserRequestDto userRequestDto) {
@@ -91,5 +91,31 @@ public class UserService {
             user = userRepository.findById(userRequestDto.getUserId()).orElse(null);
         }
         return user;
+    }
+    public void sendCodeToEmail(String toEmail) {
+        String title = "WEE 이메일 인증 번호";
+        String authCode = this.createCode();
+        userMailService.sendEmail(toEmail, title, authCode);
+        authCodes.put(toEmail, authCode);
+    }
+    private String createCode() {
+        int length = 6;
+        Random random = new Random();
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < length; i++) {
+            builder.append(random.nextInt(10));
+        }
+        return builder.toString();
+    }
+    public boolean verifiedCode(String email, String authCode) {
+        String storedAuthCode = authCodes.get(email);
+        return storedAuthCode != null && storedAuthCode.equals(authCode);
+    }
+    public void resetPassword(UserLoginRequestDto userLoginRequestDto) {
+        User user = userRepository.findByEmail(userLoginRequestDto.getEmail())
+                .orElseThrow(() -> new IllegalArgumentException("Not subscribed email"));
+        String encodedPassword = passwordEncoder.encode(userLoginRequestDto.getPassword());
+        user.setPassword(encodedPassword);
+        userRepository.save(user);
     }
 }

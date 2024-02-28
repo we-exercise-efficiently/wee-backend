@@ -9,7 +9,8 @@ import com.wee.demo.dto.request.UserRequestDto;
 import com.wee.demo.dto.request.UserLoginRequestDto;
 import com.wee.demo.dto.request.UserUpdateRequestDto;
 import com.wee.demo.dto.response.UserResponseDto;
-import com.wee.demo.service.SocialLoginService;
+import com.wee.demo.service.UserMailService;
+import com.wee.demo.service.UserSocialLoginService;
 import com.wee.demo.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,8 +29,8 @@ import java.util.Optional;
 public class UserController {
     private final UserService customUserDetailsService;
     private final UserService userServiceImpl;
-    private final UserRepository userRepository;
-    private final SocialLoginService socialLoginService;
+    private final UserMailService userMailService;
+    private final UserSocialLoginService userSocialLoginService;
 
     @PostMapping("/register")
     public ResponseEntity<UserResponseDto<UserRequestDto>> register(@RequestBody UserRequestDto userRequestDto) {
@@ -71,8 +72,8 @@ public class UserController {
     }
     @PostMapping("/login/kakao")
     public ResponseEntity<UserResponseDto<UserTokenResponseDto>> kakaoLogin(@RequestHeader("code") String code) throws JsonProcessingException {
-        String accessToken = socialLoginService.getAccessTokenKakao(code);
-        UserSocialLoginResponseDto kakaoUser = socialLoginService.getUserInfoKakao(accessToken);
+        String accessToken = userSocialLoginService.getAccessTokenKakao(code);
+        UserSocialLoginResponseDto kakaoUser = userSocialLoginService.getUserInfoKakao(accessToken);
         User registeredKakaoUser = userServiceImpl.registerUser(kakaoUser, "Kakao");
         // 강제 로그인 처리
         UserTokenResponseDto userTokenResponseDto = userServiceImpl.login(registeredKakaoUser.getEmail(), registeredKakaoUser.getPassword(), "socialLogin");
@@ -83,8 +84,8 @@ public class UserController {
     }
     @PostMapping("/login/naver")
     public ResponseEntity<UserResponseDto<UserTokenResponseDto>> naverLogin(@RequestHeader("code") String code) throws Exception {
-        String accessToken = socialLoginService.getAccessTokenNaver(code);
-        UserSocialLoginResponseDto naverUser = socialLoginService.getUserInfoNaver(accessToken);
+        String accessToken = userSocialLoginService.getAccessTokenNaver(code);
+        UserSocialLoginResponseDto naverUser = userSocialLoginService.getUserInfoNaver(accessToken);
         User registeredNaverUser = userServiceImpl.registerUser(naverUser, "Naver");
         UserTokenResponseDto userTokenResponseDto = userServiceImpl.login(registeredNaverUser.getEmail(), registeredNaverUser.getPassword(), "socialLogin");
         UserResponseDto<UserTokenResponseDto> response = new UserResponseDto<>(200, "success", userTokenResponseDto);
@@ -94,13 +95,37 @@ public class UserController {
     }
     @PostMapping("/login/google")
     public ResponseEntity<UserResponseDto<UserTokenResponseDto>> googleLogin(@RequestParam("code") String code) throws JsonProcessingException {
-        Map<String, String> tokens = socialLoginService.getAccessTokenGoogle(code);
-        UserSocialLoginResponseDto googleUser = socialLoginService.getUserInfoGoogle(tokens);
+        Map<String, String> tokens = userSocialLoginService.getAccessTokenGoogle(code);
+        UserSocialLoginResponseDto googleUser = userSocialLoginService.getUserInfoGoogle(tokens);
         User registeredGoogleUser = userServiceImpl.registerUser(googleUser, "Google");
         UserTokenResponseDto userTokenResponseDto = userServiceImpl.login(registeredGoogleUser.getEmail(), registeredGoogleUser.getPassword(), "socialLogin");
         UserResponseDto<UserTokenResponseDto> response = new UserResponseDto<>(200, "success", userTokenResponseDto);
         HttpHeaders headers = new HttpHeaders();
         headers.add("Authorization", "Bearer "+userTokenResponseDto.getAccessToken());
         return new ResponseEntity<>(response, headers, HttpStatus.OK);
+    }
+    @PostMapping("/sendmail")
+    public ResponseEntity sendMessage(@RequestParam("mail") String mail) {
+        userServiceImpl.sendCodeToEmail(mail);
+        UserResponseDto<String> responseDto = new UserResponseDto<>();
+        responseDto.setCode(200);
+        responseDto.setMessage("Success");
+        responseDto.setData("Verification code sent to " + mail);
+        return new ResponseEntity<>(responseDto, HttpStatus.OK);
+    }
+    @GetMapping("/verifymail")
+    public ResponseEntity verificationEmail(@RequestParam("mail") String mail, @RequestParam("code") String code) {
+        boolean isVerified = userServiceImpl.verifiedCode(mail, code);
+        UserResponseDto<Boolean> responseDto = new UserResponseDto<>();
+        responseDto.setCode(isVerified ? 200 : 400);
+        responseDto.setMessage(isVerified ? "Success" : "Verification failed");
+        responseDto.setData(isVerified);
+        return new ResponseEntity<>(responseDto, HttpStatus.OK);
+    }
+    @PatchMapping("/resetpassword")
+    public ResponseEntity<UserResponseDto<Void>> resetPassword(@RequestBody UserLoginRequestDto userLoginRequestDto) {
+        userServiceImpl.resetPassword(userLoginRequestDto);
+        UserResponseDto<Void> responseDto = new UserResponseDto<>(200, "Success", null);
+        return ResponseEntity.ok(responseDto);
     }
 }
