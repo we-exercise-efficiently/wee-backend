@@ -106,7 +106,7 @@ public class TodoService {
         return ResultType.SUCCESS;
     }
     public TodoRequestDto findTodo(Long todoId) {
-        Todo todo = todoRepository.findById(todoId).orElseThrow(() -> new IllegalArgumentException(("task 가 존재하지 않습니다.")));
+        Todo todo = todoRepository.findById(todoId).orElseThrow(() -> new IllegalArgumentException(("todo 가 존재하지 않습니다.")));
         List<Category> categoryList = todo.getCategoryList();
         List<CategoryRequestDto> categoryResponseList = new ArrayList<>();
         for(Category category : categoryList) {
@@ -119,5 +119,11 @@ public class TodoService {
         }
 
         return TodoRequestDto.from(todo, categoryResponseList);
+    }
+    @Transactional
+    public ResultType checkTask(Long taskId) {
+        Task task = taskRepository.findById(taskId).orElseThrow(() -> new IllegalArgumentException(("task 가 존재하지 않습니다.")));
+        task.setCompleted(!task.isCompleted());
+        return ResultType.SUCCESS;
     }
 }
