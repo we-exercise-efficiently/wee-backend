@@ -46,7 +46,8 @@ public class SecurityConfig {
                                 "https://openapi.naver.com/v1/nid/me",
                                 "https://oauth2.googleapis.com/token",
                                 "https://oauth2.googleapis.com/tokeninfo?id_token=",
-                                "/wee/comm/question/**").permitAll()
+                                "/wee/comm/question/**",
+                                "/wee/comm/list").permitAll()
                         .anyRequest().authenticated()).build();
     }
     @Bean
