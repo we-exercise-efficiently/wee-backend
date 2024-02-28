@@ -105,5 +105,19 @@ public class TodoService {
         taskRepository.delete(task);
         return ResultType.SUCCESS;
     }
+    public TodoRequestDto findTodo(Long todoId) {
+        Todo todo = todoRepository.findById(todoId).orElseThrow(() -> new IllegalArgumentException(("task 가 존재하지 않습니다.")));
+        List<Category> categoryList = todo.getCategoryList();
+        List<CategoryRequestDto> categoryResponseList = new ArrayList<>();
+        for(Category category : categoryList) {
+            List<Task> taskList = category.getTaskList();
+            List<TaskRequestDto> taskResponseList = new ArrayList<>();
+            for(Task task : taskList) {
+                taskResponseList.add(TaskRequestDto.from(task));
+            }
+            categoryResponseList.add(CategoryRequestDto.from(category, taskResponseList));
+        }
 
+        return TodoRequestDto.from(todo, categoryResponseList);
+    }
 }

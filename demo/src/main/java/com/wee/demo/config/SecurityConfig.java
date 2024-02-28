@@ -38,6 +38,8 @@ public class SecurityConfig {
                                 "/wee/user/register",
                                 "/wee/user/login/**",
                                 "/wee/user/mypage/**",
+                                "/wee/**",
+                                "/wee/todo/**",
                                 "https://kauth.kakao.com/oauth/token",
                                 "https://kapi.kakao.com/v2/user/me",
                                 "https://nid.naver.com/oauth2.0/token",

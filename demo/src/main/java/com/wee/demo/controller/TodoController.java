@@ -47,4 +47,9 @@ public class TodoController {
         return todoService.deleteTask(taskId);
     }
 
+    @GetMapping("todo/{todoId}")
+    public TodoRequestDto findTodo(@PathVariable Long todoId) {
+        return todoService.findTodo(todoId);
+    }
+
 }
