@@ -42,7 +42,8 @@ public class SecurityConfig {
                                 "wee/user/verifymail",
                                 "wee/user/findemail",
                                 "wee/user/resetpassword",
-                                "/wee/comm/question/**").permitAll()
+                                "/wee/comm/question/**",
+                                "/wee/comm/list").permitAll()
                         .anyRequest().authenticated()).build();
     }
     @Bean
