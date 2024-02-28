@@ -5,6 +5,10 @@ import com.wee.demo.dto.response.QuestionResponseDto;
 import com.wee.demo.service.QuestionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,6 +19,17 @@ import org.springframework.web.bind.annotation.*;
 public class CommunityController {
 
     private final QuestionService questionService;
+
+    //글 목록 조회
+    @GetMapping("/list")
+    public ResponseEntity getQuestions(@PageableDefault(page = 0, size = 10, sort = "createDate", direction = Sort.Direction.DESC)
+                                           Pageable pageable, @RequestParam("filter") String filter) {
+        //if(filter.equals("question"))
+        //todo: filter를 이용한 운동질문방 외 조회
+        Page<QuestionDto> questions = questionService.getQuestions(pageable);
+        QuestionResponseDto<Page<QuestionDto>> response = new QuestionResponseDto<>("200", "success", questions);
+        return ResponseEntity.ok(response);
+    }
 
     //운동질문방 글 작성
     @PostMapping("/question/{userId}")
