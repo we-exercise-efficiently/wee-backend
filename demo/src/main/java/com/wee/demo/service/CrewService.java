@@ -2,10 +2,14 @@ package com.wee.demo.service;
 
 import com.wee.demo.domain.User;
 import com.wee.demo.domain.community.CrewCommunity;
+import com.wee.demo.domain.community.QuestionCommunity;
 import com.wee.demo.dto.request.CrewDto;
+import com.wee.demo.dto.request.QuestionDto;
 import com.wee.demo.repository.CrewRepository;
 import com.wee.demo.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,6 +19,26 @@ public class CrewService {
 
     private final UserRepository userRepository;
     private final CrewRepository crewRepository;
+
+    @Transactional
+    public Page<CrewDto> getCrews(Pageable pageable) {
+        Page<CrewCommunity> crews = crewRepository.findAll(pageable);
+
+        // CrewCommunity를 CrewDto로 변환하는 람다 표현식 사용
+        Page<CrewDto> result = crews.map(crewCommunity -> {
+            return CrewDto.builder()
+                    .crewId(crewCommunity.getId())
+                    .title(crewCommunity.getTitle())
+                    .likes(crewCommunity.getLikes())
+                    .createDate(crewCommunity.getCreateDate())
+                    .hit(crewCommunity.getHit())
+                    .commentCnt(crewCommunity.getCommentCnt())
+                    .period(crewCommunity.getPeriod())
+                    .build();
+        });
+
+        return result;
+    }
 
     @Transactional
     public CrewDto write(Long userId, CrewDto crewDto) {
