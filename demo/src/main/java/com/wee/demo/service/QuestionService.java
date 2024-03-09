@@ -31,6 +31,7 @@ public class QuestionService {
                     .createDate(questionCommunity.getCreateDate())
                     .hit(questionCommunity.getHit())
                     .commentCnt(questionCommunity.getCommentCnt())
+                    .type(questionCommunity.getType())
                     .build();
         });
 

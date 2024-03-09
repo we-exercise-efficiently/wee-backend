@@ -24,12 +24,10 @@ public class CommunityController {
     private final QuestionService questionService;
     private final CrewService crewService;
 
-    //글 목록 조회
-    @GetMapping("/list")
+    //운동질문방 글 목록 조회
+    @GetMapping("/question/list")
     public ResponseEntity getQuestions(@PageableDefault(page = 0, size = 10, sort = "createDate", direction = Sort.Direction.DESC)
-                                           Pageable pageable, @RequestParam("filter") String filter) {
-        //if(filter.equals("question"))
-        //todo: filter를 이용한 운동질문방 외 조회
+                                           Pageable pageable) {
         Page<QuestionDto> questions = questionService.getQuestions(pageable);
         QuestionResponseDto<Page<QuestionDto>> response = new QuestionResponseDto<>("200", "success", questions);
         return ResponseEntity.ok(response);
@@ -70,6 +68,15 @@ public class CommunityController {
         //Todo: DELETE 요청을 보낸 유저 == 게시물 작성자 체크 로직 추가
         questionService.delete(questionId);
         QuestionResponseDto<?> response = new QuestionResponseDto("200", "success", null);
+        return ResponseEntity.ok(response);
+    }
+
+    //크루모집방 글 목록 조회
+    @GetMapping("/crew/list")
+    public ResponseEntity getCrews(@PageableDefault(page = 0, size = 10, sort = "createDate", direction = Sort.Direction.DESC)
+                                       Pageable pageable) {
+        Page<CrewDto> crews = crewService.getCrews(pageable);
+        CrewResponseDto<Page<CrewDto>> response = new CrewResponseDto<>("200", "success", crews);
         return ResponseEntity.ok(response);
     }
 
