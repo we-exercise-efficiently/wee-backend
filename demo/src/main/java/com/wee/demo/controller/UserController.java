@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.wee.demo.domain.User;
 import com.wee.demo.dto.response.UserSocialLoginResponseDto;
 import com.wee.demo.dto.response.UserTokenResponseDto;
-import com.wee.demo.repository.UserRepository;
 import com.wee.demo.dto.request.UserRequestDto;
 import com.wee.demo.dto.request.UserLoginRequestDto;
 import com.wee.demo.dto.request.UserUpdateRequestDto;
@@ -19,6 +18,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.UnsupportedEncodingException;
 import java.util.Map;
 import java.util.Optional;
 
@@ -40,7 +40,7 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
     @GetMapping("/register/checkemail")
-    public ResponseEntity<?> checkEmailAvailability(@RequestParam String email) {
+    public ResponseEntity<?> checkEmail(@RequestParam String email) {
         boolean exists = customUserDetailsService.isEmailExists(email);
         if (exists) {
             return ResponseEntity.badRequest().body(new UserResponseDto<>(400, "duplicated.", null));
@@ -90,6 +90,10 @@ public class UserController {
         HttpHeaders headers = new HttpHeaders();
         headers.add("Authorization", "Bearer "+userTokenResponseDto.getAccessToken());
         return new ResponseEntity<>(response, headers, HttpStatus.OK);
+    }
+    @GetMapping("/login/naver/url")  // for test
+    public String naverGetUrl() throws UnsupportedEncodingException {
+        return userSocialLoginService.getUrlNaver("code");
     }
     @PostMapping("/login/naver")
     public ResponseEntity<UserResponseDto<UserTokenResponseDto>> naverLogin(@RequestHeader("code") String code) throws Exception {

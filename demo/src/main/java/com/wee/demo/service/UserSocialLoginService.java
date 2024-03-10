@@ -89,6 +89,16 @@ public class UserSocialLoginService {
                 .get("nickname").asText();
         return new UserSocialLoginResponseDto(userId, nickname, email);
     }
+    public String getUrlNaver(String type) throws UnsupportedEncodingException {  // for test
+        UriComponents uriComponents = UriComponentsBuilder
+                .fromUriString("https://nid.naver.com/oauth2.0/authorize")
+                .queryParam("response_type", type)
+                .queryParam("client_id", clientIdNaver)
+                .queryParam("redirect_uri", URLEncoder.encode(redirectUrlNaver, "UTF-8"))
+                .queryParam("state", URLEncoder.encode("1234", "UTF-8"))
+                .build();
+        return uriComponents.toString();
+    }
     public String getAccessTokenNaver(String code) throws UnsupportedEncodingException {
         UriComponents uriComponents = UriComponentsBuilder
                 .fromUriString("https://nid.naver.com/oauth2.0/token")
