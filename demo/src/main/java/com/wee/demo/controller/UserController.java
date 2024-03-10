@@ -39,7 +39,7 @@ public class UserController {
         System.out.println(registeredUserRequestDto);
         return ResponseEntity.ok(response);
     }
-    @GetMapping("/checkemail")
+    @GetMapping("/register/checkemail")
     public ResponseEntity<?> checkEmailAvailability(@RequestParam String email) {
         boolean exists = customUserDetailsService.isEmailExists(email);
         if (exists) {
