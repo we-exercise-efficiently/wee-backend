@@ -39,6 +39,15 @@ public class UserController {
         System.out.println(registeredUserRequestDto);
         return ResponseEntity.ok(response);
     }
+    @GetMapping("/checkemail")
+    public ResponseEntity<?> checkEmailAvailability(@RequestParam String email) {
+        boolean exists = customUserDetailsService.isEmailExists(email);
+        if (exists) {
+            return ResponseEntity.badRequest().body(new UserResponseDto<>(400, "duplicated.", null));
+        } else {
+            return ResponseEntity.ok(new UserResponseDto<>(200, "unduplicated", null));
+        }
+    }
     @PostMapping("/login")
     public ResponseEntity<UserResponseDto<UserTokenResponseDto>> login(@RequestBody UserLoginRequestDto loginDto) {
         UserTokenResponseDto userTokenResponseDto = userServiceImpl.login(loginDto.getEmail(), loginDto.getPassword(), "login");

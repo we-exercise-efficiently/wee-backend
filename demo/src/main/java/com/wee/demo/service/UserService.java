@@ -37,6 +37,9 @@ public class UserService {
         userRequestDto.setUserId(savedUser.getUserId());
         return userRequestDto;
     }
+    public boolean isEmailExists(String email) {
+        return userRepository.findByEmail(email).isPresent();
+    }
     public UserTokenResponseDto login(String email, String password, String loginType) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
