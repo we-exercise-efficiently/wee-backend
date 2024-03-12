@@ -1,9 +1,7 @@
-package com.wee.demo.dto.request;
+package com.wee.demo.dto.response;
 
-import com.wee.demo.domain.Task;
 import com.wee.demo.domain.Todo;
-import com.wee.demo.dto.response.CategoryResponseDto;
-import com.wee.demo.dto.response.TodoResponseDto;
+import com.wee.demo.dto.request.TaskRequestDto;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -16,13 +14,16 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class TodoRequestDto {
+public class TodoDto {
     private List<TaskRequestDto> taskList;
+    private String diary;
     private Date today;
-
-    public static TodoRequestDto from(Todo todo, List<TaskRequestDto> taskList){
-        return TodoRequestDto.builder()
+    private String image;
+    public static TodoDto from(Todo todo, List<TaskRequestDto> taskList){
+        return TodoDto.builder()
+                .diary(todo.getDiary())
                 .today(todo.getToday())
+                .image(todo.getImage())
                 .taskList(taskList)
                 .build();
     }
