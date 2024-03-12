@@ -43,7 +43,7 @@ public class UserController {
     public ResponseEntity<?> checkEmailAvailability(@RequestParam String email) {
         boolean exists = customUserDetailsService.isEmailExists(email);
         if (exists) {
-            return ResponseEntity.badRequest().body(new UserResponseDto<>(400, "duplicated.", null));
+            return ResponseEntity.ok(new UserResponseDto<>(201, "duplicated.", null));
         } else {
             return ResponseEntity.ok(new UserResponseDto<>(200, "unduplicated", null));
         }
