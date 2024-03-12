@@ -25,7 +25,7 @@ public class Todo {
     private String diary;
     private String image;
     @OneToMany(mappedBy = "todo", cascade = CascadeType.ALL)
-    private List<Category> categoryList = new ArrayList<>();
+    private List<Task> taskList = new ArrayList<>();
 
     public void setUser(User user) {
         this.user = user;
