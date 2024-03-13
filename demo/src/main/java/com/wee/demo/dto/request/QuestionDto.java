@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.Date;
+import java.util.List;
 
 @Data
 @Builder
@@ -24,4 +25,6 @@ public class QuestionDto {
 
     private String type;
     private AnswerStatus answerStatus;
+
+    private List<CommentDto> comments;
 }
