@@ -8,15 +8,12 @@ import com.wee.demo.repository.UserRepository;
 import com.wee.demo.dto.request.UserRequestDto;
 import com.wee.demo.dto.request.UserUpdateRequestDto;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 import java.util.*;
 
 @Service
@@ -25,6 +22,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final UserMailService userMailService;
+    private final AuthenticationFilter authenticationFilter;
     private final Map<String, String> authCodes = new HashMap<>();
 
     @Transactional
@@ -58,8 +56,21 @@ public class UserService {
             return new UserTokenResponseDto(accessToken, refreshToken);
         }
     }
-    public Optional<User> getUser(Long userId) {
-        return userRepository.findByUserId(userId);
+    public String findUserIdByEmail(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new NoSuchElementException("Not found user: " + email));
+        return user.getUserId().toString();
+    }
+    public Optional<User> getUserByToken(String token) {
+        return authenticationFilter.getUserByToken(token);
+    }
+    public UserTokenResponseDto refreshTokens(String refreshToken) {
+        User user = getUserByToken(refreshToken)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with refresh token: " + refreshToken));
+        String newAccessToken = authenticationFilter.createAccessToken(user);
+        String newRefreshToken = authenticationFilter.createRefreshToken(user);
+        userRepository.save(user);
+        return new UserTokenResponseDto(newAccessToken, newRefreshToken);
     }
     @Transactional
     public User updateUser(Long userId, UserUpdateRequestDto userUpdateRequestDto) {
@@ -72,6 +83,7 @@ public class UserService {
         User user = userRepository.findByUserId(userId)
                 .orElseThrow(() -> new IllegalArgumentException("Not found user: " + userId));
         String encodedPassword = user.getPassword().replace("{bcrypt}", "");
+        System.out.println("encodedPassword:" + encodedPassword);
         if (!passwordEncoder.matches(password, encodedPassword)) {
             throw new IllegalArgumentException("Invalid password");
         }
