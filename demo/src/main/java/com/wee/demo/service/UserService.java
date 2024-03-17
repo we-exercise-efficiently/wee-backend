@@ -25,6 +25,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final UserMailService userMailService;
+    private final AuthenticationFilter authenticationFilter;
     private final Map<String, String> authCodes = new HashMap<>();
 
     @Transactional
@@ -58,8 +59,13 @@ public class UserService {
             return new UserTokenResponseDto(accessToken, refreshToken);
         }
     }
-    public Optional<User> getUser(Long userId) {
-        return userRepository.findByUserId(userId);
+    public String findUserIdByEmail(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new NoSuchElementException("Not found user: " + email));
+        return user.getUserId().toString();
+    }
+    public Optional<User> getUserByToken(String token) {
+        return authenticationFilter.getUserByToken(token);
     }
     @Transactional
     public User updateUser(Long userId, UserUpdateRequestDto userUpdateRequestDto) {
@@ -72,6 +78,7 @@ public class UserService {
         User user = userRepository.findByUserId(userId)
                 .orElseThrow(() -> new IllegalArgumentException("Not found user: " + userId));
         String encodedPassword = user.getPassword().replace("{bcrypt}", "");
+        System.out.println("encodedPassword:" + encodedPassword);
         if (!passwordEncoder.matches(password, encodedPassword)) {
             throw new IllegalArgumentException("Invalid password");
         }

@@ -29,7 +29,6 @@ import java.util.Optional;
 public class UserController {
     private final UserService customUserDetailsService;
     private final UserService userServiceImpl;
-    private final UserMailService userMailService;
     private final UserSocialLoginService userSocialLoginService;
 
     @PostMapping("/register")
@@ -52,13 +51,17 @@ public class UserController {
     public ResponseEntity<UserResponseDto<UserTokenResponseDto>> login(@RequestBody UserLoginRequestDto loginDto) {
         UserTokenResponseDto userTokenResponseDto = userServiceImpl.login(loginDto.getEmail(), loginDto.getPassword(), "login");
         UserResponseDto<UserTokenResponseDto> response = new UserResponseDto<>(200, "success", userTokenResponseDto);
+        String userId = userServiceImpl.findUserIdByEmail(loginDto.getEmail());
         HttpHeaders headers = new HttpHeaders();
+        headers.add("user_id", userId);
         headers.add("Authorization", "Bearer "+userTokenResponseDto.getAccessToken());
+        headers.add("refresh_token", userTokenResponseDto.getRefreshToken());
         return new ResponseEntity<>(response, headers, HttpStatus.OK);
     }
     @GetMapping("/mypage")
-    public ResponseEntity<UserResponseDto<User>> getUser(@RequestParam Long userId, @RequestHeader("Authorization") String authorizationHeader) {
-        Optional<User> user = userServiceImpl.getUser(userId);
+    public ResponseEntity<UserResponseDto<User>> getUser(@RequestHeader("Authorization") String authorizationHeader) {
+        String token = authorizationHeader.substring(7);
+        Optional<User> user = userServiceImpl.getUserByToken(token);
         if (user.isPresent()) {
             UserResponseDto<User> response = new UserResponseDto<>(200, "success", user.get());
             return ResponseEntity.ok(response);
@@ -68,14 +71,24 @@ public class UserController {
         }
     }
     @PatchMapping("/mypage")
-    public ResponseEntity<UserResponseDto<User>> updateUser(@RequestParam Long userId, @RequestBody UserUpdateRequestDto userUpdateRequestDto, @RequestHeader("Authorization") String authorizationHeader) {
-        User user = userServiceImpl.updateUser(userId, userUpdateRequestDto);
+    public ResponseEntity<UserResponseDto<User>> updateUser(@RequestBody UserUpdateRequestDto userUpdateRequestDto, @RequestHeader("Authorization") String authorizationHeader) {
+        String token = authorizationHeader.substring(7);
+        Optional<User> userOptional = userServiceImpl.getUserByToken(token);
+        if (!userOptional.isPresent()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+        }
+        User user = userServiceImpl.updateUser(userOptional.get().getUserId(), userUpdateRequestDto);
         UserResponseDto<User> response = new UserResponseDto<>(200, "success", user);
         return ResponseEntity.ok(response);
     }
     @DeleteMapping("/mypage")
-    public ResponseEntity<UserResponseDto<?>> withdrawUser(@RequestParam Long userId, @RequestParam String password, @RequestHeader("Authorization") String authorizationHeader) {
-        userServiceImpl.withdrawUser(userId, password);
+    public ResponseEntity<UserResponseDto<?>> withdrawUser(@RequestParam String password, @RequestHeader("Authorization") String authorizationHeader) {
+        String token = authorizationHeader.substring(7); // "Bearer " 문자열 제거
+        Optional<User> userOptional = userServiceImpl.getUserByToken(token);
+        if (!userOptional.isPresent()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+        }
+        userServiceImpl.withdrawUser(userOptional.get().getUserId(), password);
         UserResponseDto<?> response = new UserResponseDto<>(200, "success", null);
         return ResponseEntity.ok(response);
     }
