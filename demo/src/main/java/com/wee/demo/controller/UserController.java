@@ -57,6 +57,22 @@ public class UserController {
         headers.add("refresh_token", userTokenResponseDto.getRefreshToken());
         return new ResponseEntity<>(response, headers, HttpStatus.OK);
     }
+    @GetMapping("/login/refreshtokens")
+    public ResponseEntity<UserResponseDto<UserTokenResponseDto>> refreshTokens (@RequestHeader("refresh_token") String refreshToken) {
+        UserTokenResponseDto userTokenResponseDto = userServiceImpl.refreshTokens(refreshToken);
+        Optional<User> user = userServiceImpl.getUserByToken(refreshToken);
+        if (user.isPresent()) {
+            HttpHeaders headers = new HttpHeaders();
+            UserResponseDto<UserTokenResponseDto> response = new UserResponseDto<>(200, "success", userTokenResponseDto);
+            headers.add("user_id", String.valueOf(user.get().getUserId()));
+            headers.add("Authorization", "Bearer "+userTokenResponseDto.getAccessToken());
+            headers.add("refresh_token", userTokenResponseDto.getRefreshToken());
+            return new ResponseEntity<>(response, headers, HttpStatus.OK);
+        } else {
+            UserResponseDto<UserTokenResponseDto> response = new UserResponseDto<>(400, "Not found user", null);
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        }
+    }
     @GetMapping("/mypage")
     public ResponseEntity<UserResponseDto<User>> getUser(@RequestHeader("Authorization") String authorizationHeader) {
         String token = authorizationHeader.substring(7);
