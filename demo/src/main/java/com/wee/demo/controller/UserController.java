@@ -8,7 +8,6 @@ import com.wee.demo.dto.request.UserRequestDto;
 import com.wee.demo.dto.request.UserLoginRequestDto;
 import com.wee.demo.dto.request.UserUpdateRequestDto;
 import com.wee.demo.dto.response.UserResponseDto;
-import com.wee.demo.service.UserMailService;
 import com.wee.demo.service.UserSocialLoginService;
 import com.wee.demo.service.UserService;
 import lombok.RequiredArgsConstructor;
