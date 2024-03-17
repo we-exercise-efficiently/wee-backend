@@ -12,8 +12,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class UserUpdateRequestDto {
-    private String nickname;
-    private String password;
     private Boolean gender;
     private Double height;
     private Double weight;
@@ -21,7 +19,6 @@ public class UserUpdateRequestDto {
     private String goal;
     private String interest;
     private Integer level;
-
     @Builder
     public User toEntity(User existingUser) {
         Info info = Info.builder()
@@ -33,11 +30,7 @@ public class UserUpdateRequestDto {
                 .interest(this.interest)
                 .level(this.level)
                 .build();
-
-        existingUser.setNickname(this.nickname);
-        existingUser.setPassword(this.password);
         existingUser.setInfo(info);
-
         return existingUser;
     }
 }

@@ -5,13 +5,14 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
+import java.util.Date;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CategoryRequestDto {
-    private String categoryItem;
-    private List<TaskRequestDto> taskList;
+public class DiaryRequestDto {
+    private String diary;
+    private Date today;
+    private String image;
 }

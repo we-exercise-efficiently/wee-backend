@@ -1,6 +1,5 @@
 package com.wee.demo.dto.response;
 
-import com.wee.demo.domain.User;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -8,8 +7,8 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserSocialResponseDto {
-    private Long userId;
-    private String nickname;
-    private String email;
+public class CrewResponseDto<T> {
+    private String code;
+    private String message;
+    private T data;
 }

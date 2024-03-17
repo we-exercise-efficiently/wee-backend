@@ -6,6 +6,8 @@ import com.wee.demo.dto.request.QuestionDto;
 import com.wee.demo.repository.QuestionRepository;
 import com.wee.demo.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,6 +17,26 @@ public class QuestionService {
 
     private final UserRepository userRepository;
     private final QuestionRepository questionRepository;
+
+    @Transactional
+    public Page<QuestionDto> getQuestions(Pageable pageable) {
+        Page<QuestionCommunity> questions = questionRepository.findAll(pageable);
+
+        // QuestionCommunity를 QuestionDto로 변환하는 람다 표현식 사용
+        Page<QuestionDto> result = questions.map(questionCommunity -> {
+            return QuestionDto.builder()
+                    .questionId(questionCommunity.getId())
+                    .title(questionCommunity.getTitle())
+                    .likes(questionCommunity.getLikes())
+                    .createDate(questionCommunity.getCreateDate())
+                    .hit(questionCommunity.getHit())
+                    .commentCnt(questionCommunity.getCommentCnt())
+                    .type(questionCommunity.getType())
+                    .build();
+        });
+
+        return result;
+    }
 
     @Transactional
     public QuestionDto write(Long userId, QuestionDto questionDto) {

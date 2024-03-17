@@ -1,5 +1,6 @@
 package com.wee.demo.config;
 
+import com.wee.demo.auth.AuthorizationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -9,6 +10,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -19,9 +21,11 @@ import java.util.Arrays;
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
+    private final AuthorizationFilter authorizationFilter;
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
         return httpSecurity
+                .addFilterBefore(authorizationFilter, UsernamePasswordAuthenticationFilter.class)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .httpBasic(httpBasic -> httpBasic.disable())
                 .csrf(csrf -> csrf.disable())
@@ -31,18 +35,23 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/",
                                 "/wee",
-                                "/wee/user/register",
+                                "/wee/**",
+                                "/wee/user/register/**",
                                 "/wee/user/login/**",
-                                "https://kauth.kakao.com/oauth/token",
-                                "https://kapi.kakao.com/v2/user/me",
                                 "/wee/user/mypage/**",
-                                "/wee/comm/question/**").permitAll()
+                                "/wee/user/sendmail",
+                                "/wee/user/verifymail",
+                                "/wee/user/resetpassword",
+                                "/wee/user/mypage/**",
+                                "/wee/todo/**",
+                                "/wee/comm/question/**",
+                                "/wee/comm/list").permitAll()
                         .anyRequest().authenticated()).build();
     }
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000", "http://43.200.2.121:3000/"));
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000", "http://15.164.188.107:3000/", "http://15.164.188.107/"));
         configuration.setAllowedMethods(Arrays.asList("GET","POST","PUT","DELETE","HEAD","PATCH"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);
