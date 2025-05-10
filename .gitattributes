@@ -1,2 +1,2 @@
-* linguist-vendored
-*.java linguist-vendored=false
+demo/** linguist-documentation=false
+demo/** linguist-vendored=false
